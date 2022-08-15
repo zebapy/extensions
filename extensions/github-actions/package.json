@@ -1,0 +1,60 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "github-actions-menu",
+  "title": "GitHub Actions Menu",
+  "description": "Show GitHub Actions in macOS menu bar",
+  "icon": "command-icon.png",
+  "author": "zebapy",
+  "categories": [
+    "Developer Tools"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "index",
+      "title": "Show actions",
+      "description": "Show GitHub Actions in macOS menu bar",
+      "mode": "menu-bar",
+      "interval": "5m",
+      "preferences": [
+        {
+          "name": "githubPAT",
+          "type": "password",
+          "required": true,
+          "title": "GitHub Token",
+          "description": "Your GitHub Personal Access Token",
+          "placeholder": "GitHub Personal Access Token (scope: repo)"
+        },
+        {
+          "name": "githubRepo",
+          "type": "textfield",
+          "required": true,
+          "title": "GitHub Repo",
+          "description": "Your GitHub Repository",
+          "placeholder": "Enter in format owner/repo (e.g.: raycast/extensions)"
+        }
+      ]
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.38.3",
+    "octokit": "^2.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "~16.10.0",
+    "@types/react": "^17.0.28",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.5.1",
+    "typescript": "^4.4.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "ray publish"
+  }
+}
