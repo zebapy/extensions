@@ -2,6 +2,14 @@ import type { IAPIData } from "./types";
 
 export default <IAPIData[]>[
   {
+    name: "Apollo",
+    icon: "../assets/logo/apollo.png",
+    apiKey: "ef1ac4e3c439bc17a8e7572700691efc",
+    appId: "Q0CJ63JM7B",
+    indexName: "docs",
+    homepage: "https://www.apollographql.com/docs",
+  },
+  {
     name: "Arthas",
     icon: "../assets/logo/arthas.ico",
     apiKey: "03fb4b6577b57b5dafc792d9ddf66508",
@@ -19,6 +27,22 @@ export default <IAPIData[]>[
     searchParameters: {
       facetFilters: ["version:5.1"],
     },
+  },
+  {
+    name: "Clerk",
+    icon: "../assets/logo/clerk.png",
+    apiKey: "52385d30a5ca4460564defe5b2d0ffb1",
+    appId: "RA7W9NZP4T",
+    indexName: "prod_sanity",
+    homepage: "https://clerk.dev",
+  },
+  {
+    name: "Dubbo",
+    icon: "../assets/logo/dubbo.png",
+    apiKey: "364ae307e1da9d02b2335675e9db1eb1",
+    appId: "L5F4T9F0I1",
+    indexName: "apache_dubbo",
+    homepage: "https://dubbo.apache.org/",
   },
   {
     name: "Echarts",
@@ -42,6 +66,15 @@ export default <IAPIData[]>[
     searchParameters: {
       facetFilters: ["lang:zh"],
     },
+  },
+  {
+    name: "GitBook",
+    icon: "../assets/logo/gitbook.png",
+    apiKey:
+      "MDgxNzdmZGVhM2MzMDJiMjAxMzczZTllMmVmMDAxOGQ1N2YzMjAyM2M0ZWMxZjk5NmFmYjE0ODA0OWUzYzFlMGZpbHRlcnM9KHZpZXdhYmxlQnlQdWJsaWNTcGFjZXMlM0FOa0VHUzdoemVxYTM1c01YUVo0WC0xKSUyMEFORCUyMHByb2plY3RJZCUzQWdpdGJvb2steC1wcm9k",
+    appId: "U102FN9U1K",
+    indexName: "pages",
+    homepage: "https://docs.gitbook.com/",
   },
   {
     name: "Homebrew",
@@ -73,6 +106,28 @@ export default <IAPIData[]>[
     },
   },
   {
+    name: "Nuxt",
+    icon: "../assets/logo/nuxt.png",
+    apiKey: "60a01900a4b726d667eab75b6f337592",
+    appId: "1V8G7N9GF0",
+    indexName: "nuxtjs",
+    homepage: "https://nuxtjs.org/",
+    searchParameters: {
+      facetFilters: ["language:en-US", "tags:main"],
+    },
+  },
+  {
+    name: "Nuxt3",
+    icon: "../assets/logo/nuxt.png",
+    apiKey: "60a01900a4b726d667eab75b6f337592",
+    appId: "1V8G7N9GF0",
+    indexName: "nuxtjs",
+    homepage: "https://v3.nuxtjs.org/",
+    searchParameters: {
+      facetFilters: ["language:en-US", "tags:v3"],
+    },
+  },
+  {
     name: "Prettier",
     icon: "../assets/logo/prettier.png",
     apiKey: "9fcdb2a62af4c47cc5eecf3d5a747818",
@@ -87,6 +142,15 @@ export default <IAPIData[]>[
     appId: "BH4D9OD16A",
     indexName: "rsshub",
     homepage: "https://docs.rsshub.app/",
+  },
+  {
+    name: "Raycast",
+    icon: "../assets/logo/raycast.png",
+    apiKey:
+      "YmZlNDIxZTVlYWQyOWQ4ZThhMzdkOGUxOTY0YjU2NGNjZDNkOTA5NjQ3MmZmMjg0MzViYjYzMDI4NTVkMmQ1ZmZpbHRlcnM9KHZpZXdhYmxlQnlQdWJsaWNTcGFjZXMlM0EtTWVfOEEzOXRGaFpnM1VhVm9TTi0yKSUyMEFORCUyMHByb2plY3RJZCUzQWdpdGJvb2steC1wcm9k",
+    appId: "U102FN9U1K",
+    indexName: "pages",
+    homepage: "https://developers.raycast.com/",
   },
   {
     name: "React",
@@ -106,6 +170,52 @@ export default <IAPIData[]>[
     lang: "zh-Hans",
   },
   {
+    name: "React Bootstrap",
+    icon: "../assets/logo/react_bootstrap.png",
+    apiKey: "33985ee571397d832ef243988ff4c891",
+    appId: "C38ZI55F9H",
+    homepage: "https://react-bootstrap.github.io/",
+    indexName: "react_bootstrap_v4",
+  },
+  {
+    name: "React Native",
+    icon: "../assets/logo/react.ico",
+    apiKey: "83cd239c72f9f8b0ed270a04b1185288",
+    appId: "8TDSE0OHGQ",
+    indexName: "react-native-v2",
+    homepage: "https://reactnative.dev/",
+    searchParameters: {
+      facetFilters: [
+        "language:en",
+        [
+          "docusaurus_tag:default",
+          "docusaurus_tag:docs-default-0.69",
+          "docusaurus_tag:docs-contributing-current",
+          "docusaurus_tag:docs-architecture-current",
+        ],
+      ],
+    },
+  },
+  {
+    name: "Remix",
+    icon: "../assets/logo/remix.png",
+    apiKey: "dff56670dbec8494409989d6ec9c8ac2",
+    appId: "6OHWJSR8G4",
+    homepage: "https://remix.run/",
+    indexName: "remix",
+  },
+  {
+    name: "Slidev",
+    icon: "../assets/logo/slidev.png",
+    apiKey: "1ff173fe73b20edc962c1c24c0b1c160",
+    appId: "LCBV6MIFS6",
+    indexName: "slidev",
+    homepage: "https://sli.dev/",
+    searchParameters: {
+      facetFilters: ["language:en"],
+    },
+  },
+  {
     name: "Slidev",
     icon: "../assets/logo/slidev.png",
     apiKey: "1a5c5a504139c58f428974c78c55291d",
@@ -118,12 +228,23 @@ export default <IAPIData[]>[
     },
   },
   {
+    name: "Supabase",
+    icon: "../assets/logo/supabase.png",
+    apiKey: "0424becc4055d51ec60e54cc37df5574",
+    appId: "B3Z5XYG8NS",
+    indexName: "prod_docs",
+    homepage: "https://supabase.com/docs",
+  },
+  {
     name: "TailwindCSS v3",
     icon: "../assets/logo/tailwindcss.png",
     apiKey: "5fc87cef58bb80203d2207578309fab6",
     appId: "KNPXZI5B0M",
     indexName: "tailwindcss",
     homepage: "https://tailwindcss.com/",
+    searchParameters: {
+      facetFilters: ["version:v3"],
+    },
   },
   {
     name: "Unidata",
@@ -218,5 +339,28 @@ export default <IAPIData[]>[
     appId: "34YFD9IUQ2",
     indexName: "vuepress",
     homepage: "https://v2.vuepress.vuejs.org/",
+  },
+  {
+    name: "pnpm",
+    icon: "../assets/logo/pnpm.png",
+    apiKey: "a337998a623aa8f80d2a97a79d565086",
+    appId: "RAHRBBK2WL",
+    indexName: "pnpm",
+    homepage: "https://pnpm.io/zh",
+    searchParameters: {
+      facetFilters: ["language:en"],
+    },
+  },
+  {
+    name: "pnpm",
+    icon: "../assets/logo/pnpm.png",
+    apiKey: "a337998a623aa8f80d2a97a79d565086",
+    appId: "RAHRBBK2WL",
+    indexName: "pnpm",
+    homepage: "https://pnpm.io/zh",
+    lang: "zh-Hans",
+    searchParameters: {
+      facetFilters: ["language:zh"],
+    },
   },
 ];

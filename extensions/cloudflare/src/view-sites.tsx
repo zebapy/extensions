@@ -12,15 +12,14 @@ import { useEffect, useState } from 'react';
 
 import Service, { Account, DnsRecord, Zone } from './service';
 import {
-  getEmail,
-  getKey,
+  getToken,
   getSiteStatusIcon,
   getSiteUrl,
   handleNetworkError,
 } from './utils';
 import { CachePurgeView, purgeEverything } from './view-cache-purge';
 
-const service = new Service(getEmail(), getKey());
+const service = new Service(getToken());
 
 function Command() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -33,12 +32,14 @@ function Command() {
         const accounts = await service.listAccounts();
         setAccounts(accounts);
 
+        // load zones of each account simultaneously
         const sites: Record<string, Zone[]> = {};
-        for (let i = 0; i < accounts.length; i++) {
-          const account = accounts[i];
-          const accountSites = await service.listZones(account);
-          sites[account.id] = accountSites;
-        }
+        const zoneRequests = accounts.map(async (account) => {
+          const zones = await service.listZones(account);
+          sites[account.id] = zones;
+        });
+        await Promise.all(zoneRequests);
+
         setSites(sites);
         setLoading(false);
       } catch (e) {

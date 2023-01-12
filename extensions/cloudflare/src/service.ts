@@ -167,12 +167,11 @@ class Service {
   client: AxiosInstance;
   cache: Cache = new Cache();
 
-  constructor(email: string, key: string) {
+  constructor(token: string) {
     this.client = axios.create({
       baseURL: 'https://api.cloudflare.com/client/v4/',
       headers: {
-        'X-Auth-Email': email,
-        'X-Auth-Key': key,
+        Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json',
       },
     });
@@ -204,19 +203,34 @@ class Service {
 
   async listZones(account: Account): Promise<Zone[]> {
     const { id } = account;
-    let data;
+
+    let result;
+    // get from cache if cache is available
     if (this.cache.has(`zones-${id}`)) {
-      data = JSON.parse(this.cache.get(`zones-${id}`)!) as Response<ZoneItem[]>;
-    } else {
-      const response = await this.client.get<Response<ZoneItem[]>>('zones', {
-        params: {
-          'account.id': id,
-        },
-      });
-      data = response.data;
-      this.cache.set(`zones-${id}`, JSON.stringify(data));
+      try {
+        result = JSON.parse(this.cache.get(`zones-${id}`)!) as ZoneItem[];
+        return result.map((item) => formatZone(item));
+      } catch (e) {
+        // Whenever the cache can't be parsed, clear it and fetch from API
+        this.cache.remove(`zones-${id}`);
+      }
     }
-    return data.result.map((item) => formatZone(item));
+
+    const response = await this.client.get<Response<ZoneItem[]>>('zones', {
+      params: { 'account.id': id, per_page: 20 },
+    });
+    result = response.data.result;
+
+    // if page is not the last page, fetch the remaining pages
+    for (let i = 2; i <= response.data.result_info.total_pages; i++) {
+      const next = await this.client.get<Response<ZoneItem[]>>('zones', {
+        params: { 'account.id': id, per_page: 20, page: i },
+      });
+      result = result.concat(next.data.result);
+    }
+
+    this.cache.set(`zones-${id}`, JSON.stringify(result));
+    return result.map((item) => formatZone(item));
   }
 
   async getZone(id: string): Promise<Zone> {

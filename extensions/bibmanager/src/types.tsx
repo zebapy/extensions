@@ -3,17 +3,19 @@ export interface Item {
   uid: string;
   link: string;
   year: number;
+  adscode: string;
   month: number;
   content: string;
   tags: [];
   authors_tag: [];
+  keywords: [];
   authors_string: string;
   pdf: string;
 }
 
 export interface State {
   isLoading: boolean;
-  items: [];
+  items: Item[];
   error?: Error;
   searchText: string;
 }

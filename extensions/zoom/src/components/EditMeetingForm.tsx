@@ -2,11 +2,11 @@ import { Action, ActionPanel, Form, showToast, Toast, useNavigation } from "@ray
 import { MutatePromise } from "@raycast/utils";
 import { format } from "date-fns";
 import { useRef, useState } from "react";
-import { Meeting, updateMeeting } from "../api/meetings";
+import { Meeting, ScheduledMeeting, updateMeeting } from "../api/meetings";
 import { getErrorMessage } from "../helpers/errors";
 
 type EditMeetingFormProps = {
-  meeting: Meeting;
+  meeting: ScheduledMeeting;
   mutate: MutatePromise<
     | {
         meetings: Meeting[];
@@ -30,8 +30,7 @@ export default function MeetingForm({ meeting, mutate }: EditMeetingFormProps) {
       return;
     }
 
-    const toast = new Toast({ style: Toast.Style.Animated, title: "Updating meeting" });
-    await toast.show();
+    const toast = await showToast({ style: Toast.Style.Animated, title: "Updating meeting" });
 
     try {
       const payload = {
@@ -52,15 +51,14 @@ export default function MeetingForm({ meeting, mutate }: EditMeetingFormProps) {
         },
       });
 
-      await showToast({ style: Toast.Style.Success, title: "Updated meeting" });
+      toast.style = Toast.Style.Success;
+      toast.title = "Updated meeting";
 
-      await pop();
+      pop();
     } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to update meeting",
-        message: getErrorMessage(error),
-      });
+      toast.style = Toast.Style.Failure;
+      toast.title = "Failed to update meeting";
+      toast.message = getErrorMessage(error);
     }
   }
 
