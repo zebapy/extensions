@@ -1,5 +1,9 @@
 # Surge Outbound Mode Switcher Changelog
 
+## [Chore] - 2025-09-30
+
+- Fixed the screenshot in README
+
 ## [Chore] - 2025-09-29
 
 - Updated screenshots to macOS Tahoe
