@@ -43,24 +43,31 @@ jobs:
           # Join with spaces for Git
           PACKAGE_FILES_SPACED=$(echo "$PACKAGE_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
           
-          # Set up sparse checkout with all required files
+          # Dynamically fetch all files from scripts/ and .github/ for full dir support (small overhead)
+          echo "Fetching core files from scripts/ and .github/..."
+          SCRIPTS_FILES=$(git ls-tree -r --name-only HEAD -- scripts/ | tr '\n' ' ' || echo "")
+          GITHUB_FILES=$(git ls-tree -r --name-only HEAD -- .github/ | tr '\n' ' ' || echo "")
+          
+          # Combine: extensions packages + core files + explicit must-haves (dedup via sort -u)
+          CORE_PATHS="$SCRIPTS_FILES $GITHUB_FILES scripts/generate-code-owners.js .github/CODEOWNERS .github/raycast2github.json .github/extensionName2Folder.json"
+          ALL_SPACED="$PACKAGE_FILES_SPACED $CORE_PATHS"
+          ALL_SPACED=$(echo "$ALL_SPACED" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          
+          echo "Total sparse paths: $(echo "$ALL_SPACED" | wc -w)"
+          
+          # Set up sparse checkout: No-cone for exact files (dirs created via read-tree)
           echo "Setting up sparse checkout..."
           if ! git sparse-checkout set --no-cone; then
             echo "::error::Failed to initialize sparse checkout"
             exit 1
           fi
           
-          # Temp file for ultra-long paths (arg length safety for 1500+ paths)
-          echo "$PACKAGE_FILES_SPACED scripts/generate-code-owners.js .github/CODEOWNERS .github/raycast2github.json .github/extensionName2Folder.json" > /tmp/sparse_paths.txt
-          
-          if ! git sparse-checkout set --stdin < /tmp/sparse_paths.txt; then
+          if ! git sparse-checkout set $ALL_SPACED; then
             echo "::error::Failed to set sparse checkout files"
             exit 1
           fi
           
-          rm /tmp/sparse_paths.txt
-          
-          # Force update working directory
+          # Force update working directory (now with full file list = reliable dir creation)
           if ! git read-tree -m -u HEAD; then
             echo "::error::Failed to update working directory"
             exit 1
@@ -68,6 +75,7 @@ jobs:
           
           echo "Files actually checked out:"
           find . -type f -name "*.json" | head -20
+          ls -la scripts/ .github/ || true  # Debug: Confirm dirs/files
           
           # Store normalized for the script
           echo "PACKAGE_FILES<<EOF" >> $GITHUB_ENV
@@ -111,5 +119,5 @@ jobs:
           webhook: ${{ secrets.SLACK_RELEASE_CHANNEL_WEBHOOK_URL }}
           color: "danger"
           text: |
-            :no_entry_sign: ${{ env.GITHUB_WORKFLOW }} has failed for commit ${{ env.SHORT_SHA }}
-            <${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}|Action logs> | <${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/commit/${{ env.GITHUB_SHA }}|Commit: ${{ env.SHORT_SHA }}>
+            :no_entry_sign: ${{ github.workflow }} has failed for commit ${{ env.SHORT_SHA }}
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Action logs> | <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|Commit: ${{ env.SHORT_SHA }}>
