@@ -1,5 +1,9 @@
 # Snake Changelog
 
+## [Windows] - 2025-10-13
+
+- Port Snake to Windows
+
 ## [Update] - 2022-12-23
 
 - Make use of `environment.textSize` instead of custom implementation
