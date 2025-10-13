@@ -1,4 +1,19 @@
-import { getDefaultProfileID } from "./util";
+import fs from "fs";
+import { getLocalStatePath } from "../util";
+
+const getDefaultProfileID = () => {
+  try {
+    const path = getLocalStatePath();
+    const chromeState = fs.readFileSync(path, "utf-8");
+    const profiles = JSON.parse(chromeState).profile.info_cache;
+    if (!profiles) {
+      return "Default";
+    }
+    return Object.keys(profiles)[0];
+  } catch {
+    return "Default";
+  }
+};
 
 export const defaultChromeProfilePath = ["Application Support", "Google", "Chrome"];
 export const defaultChromeStatePath = ["Application Support", "Google", "Chrome", "Local State"];
@@ -9,11 +24,11 @@ export const CHROME_PROFILES_KEY = "CHROME_PROFILES_KEY";
 export const DownloadText = `
   # 🚨Error: Google Chrome browser is not installed
   ## This extension depends on Google Chrome browser. You must install it to continue.
-  
+
   If you have [Homebrew](https://brew.sh/) installed then press ⏎ (Enter Key) to install Google Chrome browser.
-  
+
   [Click here](https://www.google.com/chrome/) if you want to download manually.
-  
+
   [![Google Chrome](https://www.google.com/chrome/static/images/chrome-logo-m100.svg)]()
 `;
 
@@ -25,7 +40,7 @@ export const NoBookmarksText = `
 
 export const UnknownErrorText = `
 # 🚨Error: Something happened while trying to run your command
-  
+
 [![Google Chrome](https://www.google.com/chrome/static/images/chrome-logo-m100.svg)]()
 `;
 
