@@ -1,5 +1,9 @@
 # Nuxt Extension Changelog
 
+## [2.1.1] - 2025-10-15
+
+- **Fixed**: Added Windows support
+
 ## [2.1.0] - 2025-10-15
 
 ✨ New Features
