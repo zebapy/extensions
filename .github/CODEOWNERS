@@ -625,7 +625,7 @@
 /extensions/feedbin                                                 @third774
 /extensions/feedly                                                  @ShubhamVerma1811 @pernielsentikaer
 /extensions/feishu-document-creator                                 @rokcso
-/extensions/fetch-youtube-transcript                                @apoorv12 @pernielsentikaer
+/extensions/fetch-youtube-transcript                                @apoorv12 @pernielsentikaer @ridemountainpig
 /extensions/ffmpeg                                                  @RenderCoder @blekmus @aagedal @EvanZhouDev
 /extensions/fhir                                                    @loris
 /extensions/fibonacci-sequence                                      @adambutler
@@ -997,7 +997,7 @@
 /extensions/keygen                                                  @xmok
 /extensions/kill-node-modules                                       @NicolasMontone @M-Subhan1
 /extensions/kill-process                                            @rolandleth @crazyones110 @zhenpewu @Saafo @erics118 @xilopaint @validatedev @nmder
-/extensions/kimai                                                   @marinsokol
+/extensions/kimai                                                   @marinsokol @codiini
 /extensions/kinopio-inbox                                           @pketh
 /extensions/kinopoisk                                               @mattisssa
 /extensions/kiro                                                    @jyothish-ram
