@@ -6,4 +6,7 @@ export interface Delivery {
   manualDeliveryDate?: Date;
   manualMarkedAsDelivered?: boolean;
   debug?: boolean;
+  archived?: boolean;
+  archivedAt?: Date;
+  notes?: string;
 }
