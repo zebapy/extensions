@@ -1,5 +1,7 @@
 # Plane Changelog
 
+## [Update README with correct API Base Path format] - 2025-11-04
+
 ## [Add API Key Authentication and Support for Self-Hosted Plane Instances] - 2025-11-04
 
 - **API Key Authentication**
