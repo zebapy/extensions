@@ -2404,5 +2404,6 @@
   "prashantv/zoom-meeting-control": "zoom-control",
   "reckoning-dev/zotero": "zotero",
   "theherk/zoxide-git-projects": "zoxide-git-projects",
-  "espenbye/zsh-aliases": "zsh-aliases"
+  "espenbye/zsh-aliases": "zsh-aliases",
+  "TurboCoder13/zshrc-manager": "zshrc-manager"
 }
