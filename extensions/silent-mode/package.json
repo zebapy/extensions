@@ -45,7 +45,7 @@
       "title": "Alert Volume",
       "description": "The volume of the alert sound when Silent Mode is disabled",
       "type": "textfield",
-      "required": true,
+      "required": false,
       "placeholder": "Value between 1 and 100",
       "default": "100"
     }
