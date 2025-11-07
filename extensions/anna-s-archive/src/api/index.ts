@@ -1,7 +1,6 @@
 import { load } from "cheerio";
-
-import { docTypes, fileTypes, languageStrings } from "@/constants";
 import { isEmpty } from "@/utils";
+import { DOC_TYPES, FILE_TYPES, LANGUAGE_STRINGS } from "@/constants";
 
 export type ArchiveItem = {
   id: string;
@@ -47,10 +46,10 @@ export const parseArchivePage = (text: string): ArchiveItem[] => {
         const infoRaw = $info.text().split("TODO")[0].split(", ");
         const info = infoRaw.flatMap((s) => s.trim().split("·")).map((s) => s.replace("📕 ", "").trim());
 
-        const ext = info.find((item) => !isEmpty(item) && fileTypes.includes(item.toLowerCase())) || "unknown";
+        const ext = info.find((item) => !isEmpty(item) && FILE_TYPES.includes(item.toLowerCase())) || "unknown";
         const type =
           info.find(
-            (item) => !isEmpty(item) && docTypes.find((type) => item.toLowerCase().includes(type.toLowerCase())),
+            (item) => !isEmpty(item) && DOC_TYPES.find((type) => item.toLowerCase().includes(type.toLowerCase())),
           ) || "unknown";
 
         const size =
@@ -58,7 +57,7 @@ export const parseArchivePage = (text: string): ArchiveItem[] => {
             .find((item) => item.endsWith("MB"))
             ?.replace("MB", "")
             .trim() || "<unknown>";
-        const languageRaw = info.find((item) => !isEmpty(item) && languageStrings.includes(item)) || "unknown";
+        const languageRaw = info.find((item) => !isEmpty(item) && LANGUAGE_STRINGS.includes(item)) || "unknown";
 
         const language = languageRaw.split("[").pop()?.replace("]", "") || "unknown";
 
