@@ -1500,6 +1500,7 @@
 /extensions/php-docs                                                @comes @pernielsentikaer
 /extensions/php-toolbox                                             @inxilpro
 /extensions/phpmon                                                  @nicoverbruggen
+/extensions/pi-drill                                                @nikinadruhou @pernielsentikaer
 /extensions/pia-controls                                            @Yakitrak
 /extensions/pianoman                                                @juhamust
 /extensions/pick-random                                             @MatteoGauthier @hongqn
