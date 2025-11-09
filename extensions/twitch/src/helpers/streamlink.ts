@@ -8,6 +8,15 @@ export function watchStream(
   lowlatency: boolean | undefined,
   streamlinkConfig: string | undefined,
 ) {
+  if (!streamlinkLocation) {
+    showToast({
+      title: "Streamlink not found",
+      message: "Please set the Streamlink path in the extension settings.",
+      style: Toast.Style.Failure,
+    });
+    return;
+  }
+
   if (name.includes("twitch.tv/")) {
     name = name.replace(/^(https?:\/\/)?(www\.)?twitch\.tv\//, "");
   }
@@ -21,7 +30,7 @@ export function watchStream(
   // For low latency streams
   if (lowlatency) {
     let command = `${streamlinkLocation} twitch.tv/${name} ${quality} --twitch-low-latency`;
-    if (streamlinkConfig && streamlinkConfig !== "") {
+    if (streamlinkConfig) {
       command += ` --config ${streamlinkConfig}`;
     }
 

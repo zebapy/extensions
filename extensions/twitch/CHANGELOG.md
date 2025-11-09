@@ -1,5 +1,9 @@
 # Twitch Changelog
 
+## [Fix] - $2025-11-09
+
+- Added default value for streamlink config
+
 ## [Update] - 2025-11-09
 
 - Added windows support.
