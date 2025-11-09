@@ -1,5 +1,9 @@
 # qBittorrent Changelog
 
+## [Update] - 2025-11-09
+
+- Added an option to redirect to current torrents after adding.
+
 ## [Update] - 2025-11-07
 
 - Toggled on windows support
