@@ -813,6 +813,7 @@
 /extensions/greip                                                   @gre-dev @pernielsentikaer
 /extensions/grist                                                   @xmok
 /extensions/grok-ai                                                 @andreiciobotar
+/extensions/grokipedia                                              @Visual-Studio-Coder
 /extensions/groq                                                    @maximilianzuern @dezik @agungjsp
 /extensions/groq-tools                                              @juice49
 /extensions/groundhog-day                                           @xmok
