@@ -395,7 +395,7 @@
 /extensions/cpf-cnpj-generator                                      @gstvds
 /extensions/craftdocs                                               @sfkmk @kudrykv @mafredri @0x77dev
 /extensions/cran-e-search                                           @flaming-codes
-/extensions/cratecast                                               @gleich @BalliAsghar
+/extensions/cratecast                                               @gleich @BalliAsghar @sennav
 /extensions/crawldoc                                                @johan-perso
 /extensions/create-link                                             @sinsky
 /extensions/create-t3-app                                           @mozzius
