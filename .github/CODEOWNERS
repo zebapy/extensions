@@ -1340,7 +1340,7 @@
 /extensions/nightscout                                              @zachsea
 /extensions/nippon-colors                                           @nagauta
 /extensions/nix-flake-templates                                     @lex-unix
-/extensions/nixpkgs-search                                          @aiotter @xmok
+/extensions/nixpkgs-search                                          @aiotter @xmok @0xdhrv
 /extensions/nl-news-headlines                                       @namzo
 /extensions/nmbs-planner                                            @SamuelVanhaecke
 /extensions/node-js-evaluate                                        @selfish
