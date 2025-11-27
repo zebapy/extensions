@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "dough",
-  "title": "Dough",
+  "name": "lunchmoney",
+  "title": "Lunch Money",
   "description": "Unofficial Lunch Money extension",
   "icon": "coin.png",
   "author": "zebapy",
@@ -26,14 +26,14 @@
       "title": "Category Totals",
       "description": "See total spending breakdown by category for selected month",
       "mode": "view",
-      "icon": "list.png"
+      "icon": "chart.png"
     },
     {
       "name": "accounts",
       "title": "Account Balances",
       "description": "See balances for all connected accounts and net worth",
       "mode": "view",
-      "icon": "chart.png"
+      "icon": "coin.png"
     }
   ],
   "preferences": [

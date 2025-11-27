@@ -116,7 +116,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       ),
     }))
     .sort((a, b) => b.total - a.total);
@@ -187,7 +187,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value
+    monthOptions[0].value,
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
@@ -201,7 +201,7 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end]
+    [start, end],
   );
 
   const transactions = data?.transactions ?? [];
