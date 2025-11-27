@@ -9,12 +9,8 @@ import {
   List,
 } from "@raycast/api";
 import { useState } from "react";
-import { LMTransaction, LMCategory, LMTag } from "lunchmoney-tools";
 import { formatAmount } from "./mockData";
-
-type Transaction = LMTransaction;
-type Category = LMCategory;
-type Tag = LMTag;
+import type { Transaction, Category, Tag } from "./api";
 
 export interface TransactionListItemProps {
   transaction: Transaction;

@@ -8,11 +8,9 @@ import {
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { LunchMoneyApi, LMTransaction } from "lunchmoney-tools";
+import { LunchMoneyService, type Transaction } from "./api";
 import { formatAmount } from "./mockData";
 import { TransactionListItem } from "./components";
-
-type Transaction = LMTransaction;
 
 interface Preferences {
   apiKey: string;
@@ -157,7 +155,7 @@ export default function Command() {
     useState<CategoryTotal | null>(null);
   const { start, end } = getDateRange(selectedMonth);
 
-  const api = useMemo(() => new LunchMoneyApi(apiKey), [apiKey]);
+  const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
 
   const { isLoading, data } = useCachedPromise(
     async (startDate: string, endDate: string) =>

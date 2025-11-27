@@ -10,7 +10,7 @@ import {
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useMemo } from "react";
-import { LunchMoneyApi } from "lunchmoney-tools";
+import { LunchMoneyService, Asset, PlaidAccount } from "./api";
 import { formatBalance } from "./mockData";
 
 interface Preferences {
@@ -65,7 +65,7 @@ function getAccountColor(balance: number, typeName: string): Color {
 
 export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
-  const api = useMemo(() => new LunchMoneyApi(apiKey), [apiKey]);
+  const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
 
   const { isLoading, data, revalidate } = useCachedPromise(async () => {
     const [assetsResponse, plaidResponse] = await Promise.all([
@@ -77,7 +77,7 @@ export default function Command() {
 
     // Combine both types of accounts
     const allAccounts: Account[] = [
-      ...(assetsResponse.assets || []).map((asset) => ({
+      ...(assetsResponse.assets || []).map((asset: Asset) => ({
         id: asset.id,
         type_name: asset.type_name,
         subtype_name: asset.subtype_name ?? null,
@@ -90,7 +90,7 @@ export default function Command() {
         closed_on: asset.closed_on ?? null,
         exclude_transactions: asset.exclude_transactions,
       })),
-      ...(plaidResponse.plaid_accounts || []).map((plaid) => ({
+      ...(plaidResponse.plaid_accounts || []).map((plaid: PlaidAccount) => ({
         id: plaid.id,
         type_name: plaid.type || "Bank Account",
         subtype_name: plaid.subtype ?? null,
@@ -173,7 +173,7 @@ export default function Command() {
   });
 
   const otherAccounts = activeAccounts.filter(
-    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc),
+    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc)
   );
 
   // Calculate net worth (assets minus liabilities)

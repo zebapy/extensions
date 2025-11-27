@@ -17,16 +17,9 @@
     {
       "name": "list",
       "title": "List Transactions",
-      "description": "List your LunchMoney transactions by month",
+      "description": "Search and list your LunchMoney transactions with flexible date ranges",
       "mode": "view",
       "icon": "list.png"
-    },
-    {
-      "name": "search",
-      "title": "Search Transactions",
-      "description": "Search across all transactions by payee, category, amount, notes, or tags",
-      "mode": "view",
-      "icon": "eye.png"
     },
     {
       "name": "category-totals",
