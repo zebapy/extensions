@@ -156,11 +156,7 @@ export default function Command() {
   }).format(netWorth);
 
   return (
-    <List
-      isLoading={isLoading}
-      searchBarPlaceholder="Search accounts..."
-      isShowingDetail
-    >
+    <List isLoading={isLoading} searchBarPlaceholder="Search accounts...">
       <List.Section title={`Net Worth: ${formattedNetWorth}`}>
         {activeAccounts.map((account) => {
           const balance = parseFloat(account.balance);
@@ -180,47 +176,12 @@ export default function Command() {
               }}
               title={displayName}
               subtitle={institution}
-              detail={
-                <List.Item.Detail
-                  metadata={
-                    <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label
-                        title="Balance"
-                        text={formattedBalance}
-                      />
-                      <List.Item.Detail.Metadata.Label
-                        title="Type"
-                        text={account.type_name}
-                        icon={{ source: Icon.Tag, tintColor: Color.Blue }}
-                      />
-                      {account.subtype_name && (
-                        <List.Item.Detail.Metadata.Label
-                          title="Subtype"
-                          text={account.subtype_name}
-                        />
-                      )}
-                      <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label
-                        title="Currency"
-                        text={account.currency.toUpperCase()}
-                      />
-                      <List.Item.Detail.Metadata.Label
-                        title="Balance As Of"
-                        text={new Date(
-                          account.balance_as_of
-                        ).toLocaleDateString()}
-                        icon={Icon.Calendar}
-                      />
-                      {account.institution_name && (
-                        <List.Item.Detail.Metadata.Label
-                          title="Institution"
-                          text={account.institution_name}
-                        />
-                      )}
-                    </List.Item.Detail.Metadata>
-                  }
-                />
-              }
+              accessories={[
+                { text: formattedBalance },
+                {
+                  text: `Updated ${new Date(account.balance_as_of).toLocaleDateString()}`,
+                },
+              ]}
               actions={
                 <ActionPanel>
                   <Action
@@ -236,7 +197,7 @@ export default function Command() {
                   />
                   <Action.OpenInBrowser
                     title="Open in Lunch Money"
-                    url={`https://my.lunchmoney.app/assets/${account.id}`}
+                    url={`https://my.lunchmoney.app/transactions?account=${account.id}&match=all&time=all`}
                     shortcut={{ modifiers: ["cmd"], key: "o" }}
                   />
                   <Action.CopyToClipboard
@@ -269,22 +230,7 @@ export default function Command() {
                 }}
                 title={displayName}
                 subtitle={`Closed on ${account.closed_on}`}
-                detail={
-                  <List.Item.Detail
-                    metadata={
-                      <List.Item.Detail.Metadata>
-                        <List.Item.Detail.Metadata.Label
-                          title="Balance"
-                          text={formattedBalance}
-                        />
-                        <List.Item.Detail.Metadata.Label
-                          title="Closed On"
-                          text={account.closed_on || "Unknown"}
-                        />
-                      </List.Item.Detail.Metadata>
-                    }
-                  />
-                }
+                accessories={[{ text: formattedBalance }]}
                 actions={
                   <ActionPanel>
                     <Action.CopyToClipboard

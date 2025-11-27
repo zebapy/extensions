@@ -1,4 +1,10 @@
-import { ActionPanel, Action, Icon, List, getPreferenceValues } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  List,
+  getPreferenceValues,
+} from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { LunchMoneyApi, LMTransaction } from "lunchmoney-tools";
@@ -68,22 +74,33 @@ function getDateRange(monthValue: string) {
 }
 
 function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
-  const categoryMap = new Map<string, { total: number; count: number; transactions: Transaction[] }>();
+  const categoryMap = new Map<
+    string,
+    { total: number; count: number; transactions: Transaction[] }
+  >();
   let grandTotal = 0;
 
   // Only include expenses (positive amounts in Lunch Money)
   const expenses = transactions.filter((t) => {
-    const amount = typeof t.amount === "string" ? parseFloat(t.amount) : t.amount;
+    const amount =
+      typeof t.amount === "string" ? parseFloat(t.amount) : t.amount;
     return amount > 0;
   });
 
   expenses.forEach((transaction) => {
-    const amount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
+    const amount =
+      typeof transaction.amount === "string"
+        ? parseFloat(transaction.amount)
+        : transaction.amount;
     const categoryName = transaction.category_name || "Uncategorized";
 
     grandTotal += amount;
 
-    const existing = categoryMap.get(categoryName) || { total: 0, count: 0, transactions: [] };
+    const existing = categoryMap.get(categoryName) || {
+      total: 0,
+      count: 0,
+      transactions: [],
+    };
     categoryMap.set(categoryName, {
       total: existing.total + amount,
       count: existing.count + 1,
@@ -97,21 +114,32 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
       total: data.total,
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
-      transactions: data.transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      transactions: data.transactions.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      ),
     }))
     .sort((a, b) => b.total - a.total);
 
   return totals;
 }
 
-function CategoryTransactionsList({ category, onBack }: { category: CategoryTotal; onBack: () => void }) {
+function CategoryTransactionsList({
+  category,
+  onBack,
+}: {
+  category: CategoryTotal;
+  onBack: () => void;
+}) {
   return (
     <List
       navigationTitle={`${category.name} - $${category.total.toFixed(2)}`}
       searchBarPlaceholder="Search transactions..."
     >
       {category.transactions.map((transaction) => {
-        const amount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
+        const amount =
+          typeof transaction.amount === "string"
+            ? parseFloat(transaction.amount)
+            : transaction.amount;
         const formattedAmount = `-$${Math.abs(amount).toFixed(2)}`;
 
         return (
@@ -123,7 +151,11 @@ function CategoryTransactionsList({ category, onBack }: { category: CategoryTota
             accessories={[{ text: formattedAmount }]}
             actions={
               <ActionPanel>
-                <Action title="Back to Categories" icon={Icon.ArrowLeft} onAction={onBack} />
+                <Action
+                  title="Back to Categories"
+                  icon={Icon.ArrowLeft}
+                  onAction={onBack}
+                />
                 <Action.OpenInBrowser
                   title="Open in Lunch Money"
                   url={`https://my.lunchmoney.app/transactions/${transaction.id}`}
@@ -145,8 +177,11 @@ function CategoryTransactionsList({ category, onBack }: { category: CategoryTota
 export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
-  const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryTotal | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    monthOptions[0].value,
+  );
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryTotal | null>(null);
   const { start, end } = getDateRange(selectedMonth);
 
   const api = useMemo(() => new LunchMoneyApi(apiKey), [apiKey]);
@@ -165,7 +200,12 @@ export default function Command() {
   const grandTotal = categoryTotals.reduce((sum, cat) => sum + cat.total, 0);
 
   if (selectedCategory) {
-    return <CategoryTransactionsList category={selectedCategory} onBack={() => setSelectedCategory(null)} />;
+    return (
+      <CategoryTransactionsList
+        category={selectedCategory}
+        onBack={() => setSelectedCategory(null)}
+      />
+    );
   }
 
   return (
@@ -173,9 +213,17 @@ export default function Command() {
       isLoading={isLoading}
       searchBarPlaceholder="Search categories..."
       searchBarAccessory={
-        <List.Dropdown tooltip="Select Month" value={selectedMonth} onChange={setSelectedMonth}>
+        <List.Dropdown
+          tooltip="Select Month"
+          value={selectedMonth}
+          onChange={setSelectedMonth}
+        >
           {monthOptions.map((option) => (
-            <List.Dropdown.Item key={option.value} value={option.value} title={option.title} />
+            <List.Dropdown.Item
+              key={option.value}
+              value={option.value}
+              title={option.title}
+            />
           ))}
         </List.Dropdown>
       }
@@ -187,10 +235,17 @@ export default function Command() {
             icon={Icon.Tag}
             title={category.name}
             subtitle={`${category.count} transaction${category.count !== 1 ? "s" : ""}`}
-            accessories={[{ text: `${category.percentage.toFixed(1)}%` }, { text: `$${category.total.toFixed(2)}` }]}
+            accessories={[
+              { text: `${category.percentage.toFixed(1)}%` },
+              { text: `$${category.total.toFixed(2)}` },
+            ]}
             actions={
               <ActionPanel>
-                <Action title="View Transactions" icon={Icon.List} onAction={() => setSelectedCategory(category)} />
+                <Action
+                  title="View Transactions"
+                  icon={Icon.List}
+                  onAction={() => setSelectedCategory(category)}
+                />
                 <Action.CopyToClipboard
                   content={`${category.name}: $${category.total.toFixed(2)} (${category.percentage.toFixed(1)}%)`}
                   title="Copy Category Total"
