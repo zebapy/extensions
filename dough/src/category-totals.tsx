@@ -10,6 +10,7 @@ import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { LunchMoneyApi, LMTransaction } from "lunchmoney-tools";
 import { formatAmount } from "./mockData";
+import { TransactionListItem } from "./components";
 
 type Transaction = LMTransaction;
 
@@ -91,7 +92,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
 
   expenses.forEach((transaction) => {
     const amount = parseFloat(
-      formatAmount(transaction.amount, transaction.is_income),
+      formatAmount(transaction.amount, transaction.is_income)
     );
     const categoryName = transaction.category_name || "Uncategorized";
 
@@ -116,7 +117,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       ),
     }))
     .sort((a, b) => b.total - a.total);
@@ -124,13 +125,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
   return totals;
 }
 
-function CategoryTransactionsList({
-  category,
-  onBack,
-}: {
-  category: CategoryTotal;
-  onBack: () => void;
-}) {
+function CategoryTransactionsList({ category }: { category: CategoryTotal }) {
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -141,43 +136,13 @@ function CategoryTransactionsList({
       navigationTitle={`${category.name} - ${formattedTotal}`}
       searchBarPlaceholder="Search transactions..."
     >
-      {category.transactions.map((transaction) => {
-        const amount = parseFloat(
-          formatAmount(transaction.amount, transaction.is_income),
-        );
-        const formattedAmount = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(amount);
-
-        return (
-          <List.Item
-            key={transaction.id}
-            icon={Icon.ArrowDown}
-            title={transaction.payee || "Unknown"}
-            subtitle={transaction.date}
-            accessories={[{ text: formattedAmount }]}
-            actions={
-              <ActionPanel>
-                <Action
-                  title="Back to Categories"
-                  icon={Icon.ArrowLeft}
-                  onAction={onBack}
-                />
-                <Action.OpenInBrowser
-                  title="Open in Lunch Money"
-                  url={`https://my.lunchmoney.app/transactions/${transaction.id}`}
-                  shortcut={{ modifiers: ["cmd"], key: "o" }}
-                />
-                <Action.CopyToClipboard
-                  content={`${transaction.payee} - ${formattedAmount}`}
-                  title="Copy Transaction"
-                />
-              </ActionPanel>
-            }
-          />
-        );
-      })}
+      {category.transactions.map((transaction) => (
+        <TransactionListItem
+          key={transaction.id}
+          transaction={transaction}
+          lunchMoneyUrl={`https://my.lunchmoney.app/transactions/${transaction.id}`}
+        />
+      ))}
     </List>
   );
 }
@@ -186,7 +151,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
@@ -200,7 +165,7 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end],
+    [start, end]
   );
 
   const transactions = data?.transactions ?? [];
@@ -212,12 +177,7 @@ export default function Command() {
   }).format(grandTotal);
 
   if (selectedCategory) {
-    return (
-      <CategoryTransactionsList
-        category={selectedCategory}
-        onBack={() => setSelectedCategory(null)}
-      />
-    );
+    return <CategoryTransactionsList category={selectedCategory} />;
   }
 
   return (
