@@ -257,11 +257,9 @@ export default function Command() {
               accessories={[
                 {
                   text: `${category.percentage.toFixed(1)}%`,
-                  icon: { source: Icon.Percent, tintColor: Color.Orange },
                 },
                 {
                   text: formattedTotal,
-                  icon: { source: Icon.BankNote, tintColor: Color.Red },
                 },
               ]}
               actions={
