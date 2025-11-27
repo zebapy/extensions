@@ -3,7 +3,7 @@
   "name": "dough",
   "title": "Dough",
   "description": "Unofficial Lunch Money extension",
-  "icon": "extension-icon.png",
+  "icon": "coin.png",
   "author": "zebapy",
   "platforms": [
     "macOS",
