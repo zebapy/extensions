@@ -9,6 +9,7 @@ import {
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { LunchMoneyApi, LMTransaction } from "lunchmoney-tools";
+import { formatAmount } from "./mockData";
 
 type Transaction = LMTransaction;
 
@@ -89,10 +90,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
   });
 
   expenses.forEach((transaction) => {
-    const amount =
-      typeof transaction.amount === "string"
-        ? parseFloat(transaction.amount)
-        : transaction.amount;
+    const amount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
     const categoryName = transaction.category_name || "Uncategorized";
 
     grandTotal += amount;
@@ -142,10 +140,7 @@ function CategoryTransactionsList({
       searchBarPlaceholder="Search transactions..."
     >
       {category.transactions.map((transaction) => {
-        const amount =
-          typeof transaction.amount === "string"
-            ? parseFloat(transaction.amount)
-            : transaction.amount;
+        const amount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
         const formattedAmount = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",

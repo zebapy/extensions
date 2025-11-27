@@ -11,6 +11,7 @@ import {
 import { useCachedPromise } from "@raycast/utils";
 import { useMemo } from "react";
 import { LunchMoneyApi } from "lunchmoney-tools";
+import { formatBalance } from "./mockData";
 
 interface Preferences {
   apiKey: string;
@@ -177,7 +178,7 @@ export default function Command() {
 
   // Calculate net worth (assets minus liabilities)
   const netWorth = activeAccounts.reduce((sum, acc) => {
-    const balance = parseFloat(acc.balance);
+    const balance = parseFloat(formatBalance(acc.balance));
     const isLiability =
       acc.type_name.toLowerCase().includes("credit") ||
       acc.type_name.toLowerCase().includes("loan") ||
@@ -191,7 +192,7 @@ export default function Command() {
   }).format(netWorth);
 
   const renderAccount = (account: Account) => {
-    const balance = parseFloat(account.balance);
+    const balance = parseFloat(formatBalance(account.balance));
     const formattedBalance = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: account.currency.toUpperCase(),

@@ -17,6 +17,7 @@ import {
   LMCategory,
   LMTag,
 } from "lunchmoney-tools";
+import { formatAmount } from "./mockData";
 
 type Transaction = LMTransaction;
 type Category = LMCategory;
@@ -159,12 +160,13 @@ function TransactionDetail({
   onEdit: () => void;
   monthValue: string;
 }) {
-  const amount =
+  const originalAmount =
     typeof transaction.amount === "string"
       ? parseFloat(transaction.amount)
       : transaction.amount;
-  const isExpense = amount > 0;
-  const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const isExpense = originalAmount > 0;
+  const displayAmount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
+  const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const isReviewed = transaction.status === "cleared";
 
   const { start, end } = getDateRange(monthValue);
@@ -381,12 +383,13 @@ export default function Command() {
       }
     >
       {transactions.map((transaction: Transaction) => {
-        const amount =
+        const originalAmount =
           typeof transaction.amount === "string"
             ? parseFloat(transaction.amount)
             : transaction.amount;
-        const isExpense = amount > 0;
-        const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const isExpense = originalAmount > 0;
+        const displayAmount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
+        const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         const isReviewed = transaction.status === "cleared";
 
         return (
