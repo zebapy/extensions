@@ -26,7 +26,7 @@ interface CategoryTotal {
 
 function calculateCategoryTotals(
   transactions: Transaction[],
-  categories: Category[]
+  categories: Category[],
 ): CategoryTotal[] {
   const categoryMap = new Map<
     string,
@@ -74,7 +74,7 @@ function calculateCategoryTotals(
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       ),
       isIncome: data.isIncome,
     }))
@@ -119,13 +119,13 @@ export default function Command() {
   const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value
+    monthOptions[0].value,
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
   const { start, end } = useMemo(
     () => getDateRangeForFilter(selectedMonth),
-    [selectedMonth]
+    [selectedMonth],
   );
 
   const { isLoading, data } = useCachedPromise(
@@ -136,7 +136,7 @@ export default function Command() {
       if (error) throw error;
       return data?.transactions || [];
     },
-    [start, end]
+    [start, end],
   );
 
   const { data: categoriesData } = useCachedPromise(async () => {

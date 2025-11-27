@@ -165,7 +165,7 @@ export default function Command() {
   });
 
   const otherAccounts = activeAccounts.filter(
-    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc)
+    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc),
   );
 
   // Calculate net worth (assets minus liabilities)

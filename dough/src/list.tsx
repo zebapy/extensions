@@ -16,12 +16,12 @@ export default function Command() {
   const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value
+    monthOptions[0].value,
   );
   const [searchText, setSearchText] = useState("");
   const { start, end } = useMemo(
     () => getDateRangeForFilter(selectedMonth),
-    [selectedMonth]
+    [selectedMonth],
   );
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
@@ -36,7 +36,7 @@ export default function Command() {
       if (error) throw error;
       return data?.transactions || [];
     },
-    [start, end]
+    [start, end],
   );
 
   const { data: categoriesData } = useCachedPromise(async () => {
@@ -93,7 +93,7 @@ export default function Command() {
   async function handleUpdateTransaction(
     transactionId: number,
     categoryId: string,
-    tagNames: string[]
+    tagNames: string[],
   ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)

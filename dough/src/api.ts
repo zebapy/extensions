@@ -25,7 +25,7 @@ export function useLunchMoney() {
           Authorization: `Bearer ${apiKey}`,
         },
       }),
-    [apiKey]
+    [apiKey],
   );
 
   return client;
