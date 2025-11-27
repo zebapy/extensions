@@ -1,7 +1,22 @@
-import { ActionPanel, Action, Icon, List, getPreferenceValues, Detail, Form, showToast, Toast } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  List,
+  getPreferenceValues,
+  Detail,
+  Form,
+  showToast,
+  Toast,
+} from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { LunchMoneyApi, LMTransaction, LMCategory, LMTag } from "lunchmoney-tools";
+import {
+  LunchMoneyApi,
+  LMTransaction,
+  LMCategory,
+  LMTag,
+} from "lunchmoney-tools";
 
 type Transaction = LMTransaction;
 type Category = LMCategory;
@@ -93,7 +108,9 @@ function EditTransactionForm({
     }
   }
 
-  const currentCategory = categories.find((c) => c.name === transaction.category_name);
+  const currentCategory = categories.find(
+    (c) => c.name === transaction.category_name
+  );
 
   return (
     <Form
@@ -105,12 +122,24 @@ function EditTransactionForm({
       }
     >
       <Form.Description text={`Editing: ${transaction.payee}`} />
-      <Form.Dropdown id="category" title="Category" defaultValue={currentCategory?.id.toString()}>
+      <Form.Dropdown
+        id="category"
+        title="Category"
+        defaultValue={currentCategory?.id.toString()}
+      >
         {categories.map((category) => (
-          <Form.Dropdown.Item key={category.id} value={category.id.toString()} title={category.name} />
+          <Form.Dropdown.Item
+            key={category.id}
+            value={category.id.toString()}
+            title={category.name}
+          />
         ))}
       </Form.Dropdown>
-      <Form.TagPicker id="tags" title="Tags" defaultValue={transaction.tags.map((t) => t.name)}>
+      <Form.TagPicker
+        id="tags"
+        title="Tags"
+        defaultValue={transaction.tags.map((t) => t.name)}
+      >
         {tags.map((tag) => (
           <Form.TagPicker.Item key={tag.id} value={tag.name} title={tag.name} />
         ))}
@@ -123,14 +152,24 @@ function TransactionDetail({
   transaction,
   onBack,
   onEdit,
+  monthValue,
 }: {
   transaction: Transaction;
   onBack: () => void;
   onEdit: () => void;
+  monthValue: string;
 }) {
-  const amount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
+  const amount =
+    typeof transaction.amount === "string"
+      ? parseFloat(transaction.amount)
+      : transaction.amount;
   const isExpense = amount > 0;
   const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(amount).toFixed(2)}`;
+
+  const { start, end } = getDateRange(monthValue);
+  const [year, month] = monthValue.split("-");
+  const category = transaction.category_id || "";
+  const lunchMoneyUrl = `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
 
   return (
     <Detail
@@ -145,7 +184,11 @@ function TransactionDetail({
           />
           <Detail.Metadata.Separator />
           <Detail.Metadata.Label title="Date" text={transaction.date} />
-          <Detail.Metadata.Label title="Category" text={transaction.category_name || "Uncategorized"} icon={Icon.Tag} />
+          <Detail.Metadata.Label
+            title="Category"
+            text={transaction.category_name || "Uncategorized"}
+            icon={Icon.Tag}
+          />
           {transaction.tags.length > 0 && (
             <Detail.Metadata.TagList title="Tags">
               {transaction.tags.map((tag) => (
@@ -154,13 +197,23 @@ function TransactionDetail({
             </Detail.Metadata.TagList>
           )}
           <Detail.Metadata.Separator />
-          <Detail.Metadata.Label title="Currency" text={transaction.currency.toUpperCase()} />
-          <Detail.Metadata.Label title="Transaction ID" text={transaction.id.toString()} />
+          <Detail.Metadata.Label
+            title="Currency"
+            text={transaction.currency.toUpperCase()}
+          />
+          <Detail.Metadata.Label
+            title="Transaction ID"
+            text={transaction.id.toString()}
+          />
         </Detail.Metadata>
       }
       actions={
         <ActionPanel>
-          <Action title="Back to List" icon={Icon.ArrowLeft} onAction={onBack} />
+          <Action
+            title="Back to List"
+            icon={Icon.ArrowLeft}
+            onAction={onBack}
+          />
           <Action
             title="Edit Transaction"
             icon={Icon.Pencil}
@@ -169,10 +222,13 @@ function TransactionDetail({
           />
           <Action.OpenInBrowser
             title="Open in Lunch Money"
-            url={`https://my.lunchmoney.app/transactions/${transaction.id}`}
+            url={lunchMoneyUrl}
             shortcut={{ modifiers: ["cmd"], key: "o" }}
           />
-          <Action.CopyToClipboard content={`${transaction.payee} - ${formattedAmount}`} title="Copy Transaction" />
+          <Action.CopyToClipboard
+            content={`${transaction.payee} - ${formattedAmount}`}
+            title="Copy Transaction"
+          />
         </ActionPanel>
       }
     />
@@ -182,10 +238,14 @@ function TransactionDetail({
 export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
-  const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    monthOptions[0].value
+  );
   const { start, end } = getDateRange(selectedMonth);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   const api = useMemo(() => new LunchMoneyApi(apiKey), [apiKey]);
 
@@ -195,21 +255,29 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end],
+    [start, end]
   );
 
-  const { data: categoriesData } = useCachedPromise(async () => api.getCategories());
+  const { data: categoriesData } = useCachedPromise(async () =>
+    api.getCategories()
+  );
 
   const { data: tagsData } = useCachedPromise(async () => api.getTags());
 
-  const transactions = (data?.transactions ?? []).sort((a: Transaction, b: Transaction) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  const transactions = (data?.transactions ?? []).sort(
+    (a: Transaction, b: Transaction) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+  );
 
   const categories = categoriesData?.categories ?? [];
   const tags = tagsData ?? [];
 
-  async function handleUpdateTransaction(transactionId: number, categoryId: string, tagNames: string[]) {
+  async function handleUpdateTransaction(
+    transactionId: number,
+    categoryId: string,
+    tagNames: string[]
+  ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)
       .filter((id): id is number => id !== undefined);
@@ -223,13 +291,15 @@ export default function Command() {
   }
 
   async function handleToggleReviewStatus(transaction: Transaction) {
-    const newStatus = transaction.status === "cleared" ? "uncleared" : "cleared";
+    const newStatus =
+      transaction.status === "cleared" ? "uncleared" : "cleared";
     await api.updateTransaction(transaction.id, {
       status: newStatus,
     });
     await showToast({
       style: Toast.Style.Success,
-      title: newStatus === "cleared" ? "Marked as reviewed" : "Marked as unreviewed",
+      title:
+        newStatus === "cleared" ? "Marked as reviewed" : "Marked as unreviewed",
     });
     revalidate();
   }
@@ -240,7 +310,9 @@ export default function Command() {
         transaction={editingTransaction}
         categories={categories}
         tags={tags}
-        onSubmit={(categoryId, tagIds) => handleUpdateTransaction(editingTransaction.id, categoryId, tagIds)}
+        onSubmit={(categoryId, tagIds) =>
+          handleUpdateTransaction(editingTransaction.id, categoryId, tagIds)
+        }
       />
     );
   }
@@ -254,6 +326,7 @@ export default function Command() {
           setEditingTransaction(selectedTransaction);
           setSelectedTransaction(null);
         }}
+        monthValue={selectedMonth}
       />
     );
   }
@@ -263,15 +336,26 @@ export default function Command() {
       isLoading={isLoading}
       searchBarPlaceholder="Search transactions..."
       searchBarAccessory={
-        <List.Dropdown tooltip="Select Month" value={selectedMonth} onChange={setSelectedMonth}>
+        <List.Dropdown
+          tooltip="Select Month"
+          value={selectedMonth}
+          onChange={setSelectedMonth}
+        >
           {monthOptions.map((option) => (
-            <List.Dropdown.Item key={option.value} value={option.value} title={option.title} />
+            <List.Dropdown.Item
+              key={option.value}
+              value={option.value}
+              title={option.title}
+            />
           ))}
         </List.Dropdown>
       }
     >
       {transactions.map((transaction: Transaction) => {
-        const amount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
+        const amount =
+          typeof transaction.amount === "string"
+            ? parseFloat(transaction.amount)
+            : transaction.amount;
         const isExpense = amount > 0;
         const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(amount).toFixed(2)}`;
         const isReviewed = transaction.status === "cleared";
@@ -292,7 +376,11 @@ export default function Command() {
             ]}
             actions={
               <ActionPanel>
-                <Action title="View Details" icon={Icon.Eye} onAction={() => setSelectedTransaction(transaction)} />
+                <Action
+                  title="View Details"
+                  icon={Icon.Eye}
+                  onAction={() => setSelectedTransaction(transaction)}
+                />
                 <Action
                   title={isReviewed ? "Mark as Unreviewed" : "Mark as Reviewed"}
                   icon={isReviewed ? Icon.Circle : Icon.CheckCircle}
@@ -307,7 +395,11 @@ export default function Command() {
                 />
                 <Action.OpenInBrowser
                   title="Open in Lunch Money"
-                  url={`https://my.lunchmoney.app/transactions/${transaction.id}`}
+                  url={(() => {
+                    const [year, month] = selectedMonth.split("-");
+                    const category = transaction.category_id || "";
+                    return `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
+                  })()}
                   shortcut={{ modifiers: ["cmd"], key: "o" }}
                 />
                 <Action.CopyToClipboard
