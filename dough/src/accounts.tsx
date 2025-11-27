@@ -1,4 +1,13 @@
-import { ActionPanel, Action, Icon, List, getPreferenceValues, Color, showToast, Toast } from "@raycast/api";
+import {
+  ActionPanel,
+  Action,
+  Icon,
+  List,
+  getPreferenceValues,
+  Color,
+  showToast,
+  Toast,
+} from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useMemo } from "react";
 import { LunchMoneyApi } from "lunchmoney-tools";
@@ -25,8 +34,10 @@ function getAccountIcon(typeName: string): Icon {
   const type = typeName.toLowerCase();
   if (type.includes("credit")) return Icon.CreditCard;
   if (type.includes("cash")) return Icon.BankNote;
-  if (type.includes("checking") || type.includes("saving")) return Icon.Building;
-  if (type.includes("investment") || type.includes("brokerage")) return Icon.LineChart;
+  if (type.includes("checking") || type.includes("saving"))
+    return Icon.Building;
+  if (type.includes("investment") || type.includes("brokerage"))
+    return Icon.LineChart;
   if (type.includes("loan") || type.includes("mortgage")) return Icon.House;
   return Icon.Wallet;
 }
@@ -35,7 +46,11 @@ function getAccountColor(balance: number, typeName: string): Color {
   const type = typeName.toLowerCase();
 
   // Credit cards and loans are liabilities - positive balance means you owe money
-  if (type.includes("credit") || type.includes("loan") || type.includes("mortgage")) {
+  if (
+    type.includes("credit") ||
+    type.includes("loan") ||
+    type.includes("mortgage")
+  ) {
     return balance > 0 ? Color.Red : Color.Green;
   }
 
@@ -48,7 +63,10 @@ export default function Command() {
   const api = useMemo(() => new LunchMoneyApi(apiKey), [apiKey]);
 
   const { isLoading, data, revalidate } = useCachedPromise(async () => {
-    const [assetsResponse, plaidResponse] = await Promise.all([api.getAssets(), api.getPlaidAccounts()]);
+    const [assetsResponse, plaidResponse] = await Promise.all([
+      api.getAssets(),
+      api.getPlaidAccounts(),
+    ]);
 
     // Combine both types of accounts
     const allAccounts: Account[] = [
@@ -133,7 +151,11 @@ export default function Command() {
   }, 0);
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search accounts...">
+    <List
+      isLoading={isLoading}
+      searchBarPlaceholder="Search accounts..."
+      isShowingDetail
+    >
       <List.Section title={`Net Worth: $${netWorth.toFixed(2)}`}>
         {activeAccounts.map((account) => {
           const balance = parseFloat(account.balance);
@@ -150,14 +172,54 @@ export default function Command() {
               }}
               title={displayName}
               subtitle={institution}
-              accessories={[
-                { tag: { value: account.type_name, color: Color.Blue } },
-                { text: formattedBalance },
-                { text: `as of ${account.balance_as_of}`, icon: Icon.Calendar },
-              ]}
+              detail={
+                <List.Item.Detail
+                  metadata={
+                    <List.Item.Detail.Metadata>
+                      <List.Item.Detail.Metadata.Label
+                        title="Balance"
+                        text={formattedBalance}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Type"
+                        text={account.type_name}
+                        icon={{ source: Icon.Tag, tintColor: Color.Blue }}
+                      />
+                      {account.subtype_name && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Subtype"
+                          text={account.subtype_name}
+                        />
+                      )}
+                      <List.Item.Detail.Metadata.Separator />
+                      <List.Item.Detail.Metadata.Label
+                        title="Currency"
+                        text={account.currency.toUpperCase()}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Balance As Of"
+                        text={new Date(
+                          account.balance_as_of
+                        ).toLocaleDateString()}
+                        icon={Icon.Calendar}
+                      />
+                      {account.institution_name && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Institution"
+                          text={account.institution_name}
+                        />
+                      )}
+                    </List.Item.Detail.Metadata>
+                  }
+                />
+              }
               actions={
                 <ActionPanel>
-                  <Action title="Refresh Balance" icon={Icon.ArrowClockwise} onAction={revalidate} />
+                  <Action
+                    title="Refresh Balance"
+                    icon={Icon.ArrowClockwise}
+                    onAction={revalidate}
+                  />
                   <Action
                     title="Sync All Accounts"
                     icon={Icon.Download}
@@ -169,7 +231,10 @@ export default function Command() {
                     url={`https://my.lunchmoney.app/assets/${account.id}`}
                     shortcut={{ modifiers: ["cmd"], key: "o" }}
                   />
-                  <Action.CopyToClipboard content={`${displayName}: ${formattedBalance}`} title="Copy Balance" />
+                  <Action.CopyToClipboard
+                    content={`${displayName}: ${formattedBalance}`}
+                    title="Copy Balance"
+                  />
                 </ActionPanel>
               }
             />
@@ -187,13 +252,34 @@ export default function Command() {
             return (
               <List.Item
                 key={account.id}
-                icon={{ source: Icon.XMarkCircle, tintColor: Color.SecondaryText }}
+                icon={{
+                  source: Icon.XMarkCircle,
+                  tintColor: Color.SecondaryText,
+                }}
                 title={displayName}
                 subtitle={`Closed on ${account.closed_on}`}
-                accessories={[{ text: formattedBalance }]}
+                detail={
+                  <List.Item.Detail
+                    metadata={
+                      <List.Item.Detail.Metadata>
+                        <List.Item.Detail.Metadata.Label
+                          title="Balance"
+                          text={formattedBalance}
+                        />
+                        <List.Item.Detail.Metadata.Label
+                          title="Closed On"
+                          text={account.closed_on || "Unknown"}
+                        />
+                      </List.Item.Detail.Metadata>
+                    }
+                  />
+                }
                 actions={
                   <ActionPanel>
-                    <Action.CopyToClipboard content={`${displayName}: ${formattedBalance}`} title="Copy Balance" />
+                    <Action.CopyToClipboard
+                      content={`${displayName}: ${formattedBalance}`}
+                      title="Copy Balance"
+                    />
                   </ActionPanel>
                 }
               />
