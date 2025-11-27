@@ -150,16 +150,24 @@ export default function Command() {
     return sum + (isLiability ? -balance : balance);
   }, 0);
 
+  const formattedNetWorth = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(netWorth);
+
   return (
     <List
       isLoading={isLoading}
       searchBarPlaceholder="Search accounts..."
       isShowingDetail
     >
-      <List.Section title={`Net Worth: $${netWorth.toFixed(2)}`}>
+      <List.Section title={`Net Worth: ${formattedNetWorth}`}>
         {activeAccounts.map((account) => {
           const balance = parseFloat(account.balance);
-          const formattedBalance = `$${Math.abs(balance).toFixed(2)}`;
+          const formattedBalance = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: account.currency.toUpperCase(),
+          }).format(Math.abs(balance));
           const displayName = account.display_name || account.name;
           const institution = account.institution_name || account.type_name;
 
@@ -246,7 +254,10 @@ export default function Command() {
         <List.Section title="Closed Accounts">
           {closedAccounts.map((account) => {
             const balance = parseFloat(account.balance);
-            const formattedBalance = `$${Math.abs(balance).toFixed(2)}`;
+            const formattedBalance = new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: account.currency.toUpperCase(),
+            }).format(Math.abs(balance));
             const displayName = account.display_name || account.name;
 
             return (
