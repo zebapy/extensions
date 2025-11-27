@@ -30,10 +30,14 @@ interface Account {
   exclude_transactions: boolean;
 }
 
-function getAccountIcon(typeName: string): Icon {
+function getAccountIcon(typeName: string, subtypeName: string | null): Icon {
   const type = typeName.toLowerCase();
+  const subtype = subtypeName?.toLowerCase() || "";
+
   if (type.includes("credit")) return Icon.CreditCard;
   if (type.includes("cash")) return Icon.BankNote;
+  if (subtype.includes("checking") || subtype.includes("savings"))
+    return Icon.Building;
   if (type.includes("checking") || type.includes("saving"))
     return Icon.Building;
   if (type.includes("investment") || type.includes("brokerage"))
@@ -67,6 +71,8 @@ export default function Command() {
       api.getAssets(),
       api.getPlaidAccounts(),
     ]);
+
+    console.log(assetsResponse, plaidResponse);
 
     // Combine both types of accounts
     const allAccounts: Account[] = [
@@ -136,9 +142,38 @@ export default function Command() {
     }
   }
 
-  // Separate active and closed accounts
+  // Separate accounts by type
   const activeAccounts = accounts.filter((acc) => !acc.closed_on);
   const closedAccounts = accounts.filter((acc) => acc.closed_on);
+
+  // Categorize active accounts by type
+  const cashAccounts = activeAccounts.filter((acc) => {
+    const type = acc.type_name.toLowerCase();
+    const subtype = acc.subtype_name?.toLowerCase() || "";
+    return (
+      type.includes("cash") ||
+      type.includes("depository") ||
+      subtype.includes("checking") ||
+      subtype.includes("savings") ||
+      type.includes("checking") ||
+      type.includes("saving") ||
+      type.includes("investment") ||
+      type.includes("brokerage")
+    );
+  });
+
+  const creditAccounts = activeAccounts.filter((acc) => {
+    const type = acc.type_name.toLowerCase();
+    return (
+      type.includes("credit") ||
+      type.includes("loan") ||
+      type.includes("mortgage")
+    );
+  });
+
+  const otherAccounts = activeAccounts.filter(
+    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc)
+  );
 
   // Calculate net worth (assets minus liabilities)
   const netWorth = activeAccounts.reduce((sum, acc) => {
@@ -155,61 +190,82 @@ export default function Command() {
     currency: "USD",
   }).format(netWorth);
 
+  const renderAccount = (account: Account) => {
+    const balance = parseFloat(account.balance);
+    const formattedBalance = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: account.currency.toUpperCase(),
+    }).format(Math.abs(balance));
+    const displayName = account.display_name || account.name;
+    const institution = account.institution_name || account.type_name;
+
+    return (
+      <List.Item
+        key={account.id}
+        icon={{
+          source: getAccountIcon(account.type_name, account.subtype_name),
+          tintColor: getAccountColor(balance, account.type_name),
+        }}
+        title={displayName}
+        subtitle={institution}
+        accessories={[
+          { text: formattedBalance },
+          {
+            text: `Updated ${new Date(account.balance_as_of).toLocaleDateString()}`,
+          },
+        ]}
+        actions={
+          <ActionPanel>
+            <Action
+              title="Refresh Balance"
+              icon={Icon.ArrowClockwise}
+              onAction={revalidate}
+            />
+            <Action
+              title="Sync All Accounts"
+              icon={Icon.Download}
+              shortcut={{ modifiers: ["cmd"], key: "s" }}
+              onAction={handleSync}
+            />
+            <Action.OpenInBrowser
+              title="Open in Lunch Money"
+              url={`https://my.lunchmoney.app/transactions?account=${account.id}&match=all&time=all`}
+              shortcut={{ modifiers: ["cmd"], key: "o" }}
+            />
+            <Action.CopyToClipboard
+              content={`${displayName}: ${formattedBalance}`}
+              title="Copy Balance"
+            />
+          </ActionPanel>
+        }
+      />
+    );
+  };
+
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Search accounts...">
-      <List.Section title={`Net Worth: ${formattedNetWorth}`}>
-        {activeAccounts.map((account) => {
-          const balance = parseFloat(account.balance);
-          const formattedBalance = new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: account.currency.toUpperCase(),
-          }).format(Math.abs(balance));
-          const displayName = account.display_name || account.name;
-          const institution = account.institution_name || account.type_name;
+      <List.Section
+        title={`Net Worth: ${formattedNetWorth}`}
+        subtitle={`${activeAccounts.length} accounts`}
+      />
 
-          return (
-            <List.Item
-              key={account.id}
-              icon={{
-                source: getAccountIcon(account.type_name),
-                tintColor: getAccountColor(balance, account.type_name),
-              }}
-              title={displayName}
-              subtitle={institution}
-              accessories={[
-                { text: formattedBalance },
-                {
-                  text: `Updated ${new Date(account.balance_as_of).toLocaleDateString()}`,
-                },
-              ]}
-              actions={
-                <ActionPanel>
-                  <Action
-                    title="Refresh Balance"
-                    icon={Icon.ArrowClockwise}
-                    onAction={revalidate}
-                  />
-                  <Action
-                    title="Sync All Accounts"
-                    icon={Icon.Download}
-                    shortcut={{ modifiers: ["cmd"], key: "s" }}
-                    onAction={handleSync}
-                  />
-                  <Action.OpenInBrowser
-                    title="Open in Lunch Money"
-                    url={`https://my.lunchmoney.app/transactions?account=${account.id}&match=all&time=all`}
-                    shortcut={{ modifiers: ["cmd"], key: "o" }}
-                  />
-                  <Action.CopyToClipboard
-                    content={`${displayName}: ${formattedBalance}`}
-                    title="Copy Balance"
-                  />
-                </ActionPanel>
-              }
-            />
-          );
-        })}
-      </List.Section>
+      {cashAccounts.length > 0 && (
+        <List.Section title="Cash & Investments">
+          {cashAccounts.map(renderAccount)}
+        </List.Section>
+      )}
+
+      {creditAccounts.length > 0 && (
+        <List.Section title="Credit & Loans">
+          {creditAccounts.map(renderAccount)}
+        </List.Section>
+      )}
+
+      {otherAccounts.length > 0 && (
+        <List.Section title="Other Accounts">
+          {otherAccounts.map(renderAccount)}
+        </List.Section>
+      )}
 
       {closedAccounts.length > 0 && (
         <List.Section title="Closed Accounts">
