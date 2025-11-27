@@ -295,7 +295,7 @@ export function EditTransactionForm({
   }
 
   const currentCategory = categories.find(
-    (c) => c.id === transaction.category_id
+    (c) => c.id === transaction.category_id,
   );
 
   // Get tag names from tag_ids

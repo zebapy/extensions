@@ -20,12 +20,12 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value
+    monthOptions[0].value,
   );
   const [searchText, setSearchText] = useState("");
   const { start, end } = useMemo(
     () => getDateRangeForFilter(selectedMonth),
-    [selectedMonth]
+    [selectedMonth],
   );
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
@@ -40,11 +40,11 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end]
+    [start, end],
   );
 
   const { data: categoriesData } = useCachedPromise(async () =>
-    api.getCategories()
+    api.getCategories(),
   );
 
   const { data: tagsData } = useCachedPromise(async () => api.getTags());
@@ -91,7 +91,7 @@ export default function Command() {
   async function handleUpdateTransaction(
     transactionId: number,
     categoryId: string,
-    tagNames: string[]
+    tagNames: string[],
   ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)
