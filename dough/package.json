@@ -49,7 +49,7 @@
   "dependencies": {
     "@raycast/api": "^1.103.8",
     "@raycast/utils": "^2.2.2",
-    "openapi-typescript-fetch": "^2.2.1"
+    "openapi-fetch": "^0.15.0"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.1.1",

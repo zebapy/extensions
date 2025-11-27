@@ -1,7 +1,7 @@
-import { List, getPreferenceValues, showToast, Toast } from "@raycast/api";
+import { List, showToast, Toast } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { LunchMoneyService, type Transaction, type Tag } from "./api";
+import { type Transaction, type Tag, useLunchMoney } from "./api";
 import {
   EditTransactionForm,
   TransactionDetail,
@@ -12,42 +12,44 @@ import {
   DateRangeDropdown,
 } from "./components";
 
-interface Preferences {
-  apiKey: string;
-}
-
 export default function Command() {
-  const { apiKey } = getPreferenceValues<Preferences>();
+  const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const [searchText, setSearchText] = useState("");
   const { start, end } = useMemo(
     () => getDateRangeForFilter(selectedMonth),
-    [selectedMonth],
+    [selectedMonth]
   );
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
-  const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
-
   const { isLoading, data, revalidate } = useCachedPromise(
-    async (startDate: string, endDate: string) =>
-      api.getTransactions({
-        start_date: startDate,
-        end_date: endDate,
-      }),
-    [start, end],
+    async (startDate: string, endDate: string) => {
+      const { data, error } = await client.GET("/transactions", {
+        params: { query: { start_date: startDate, end_date: endDate } },
+      });
+      if (error) throw error;
+      return data?.transactions || [];
+    },
+    [start, end]
   );
 
-  const { data: categoriesData } = useCachedPromise(async () =>
-    api.getCategories(),
-  );
+  const { data: categoriesData } = useCachedPromise(async () => {
+    const { data, error } = await client.GET("/categories");
+    if (error) throw error;
+    return data?.categories || [];
+  });
 
-  const { data: tagsData } = useCachedPromise(async () => api.getTags());
+  const { data: tagsData } = useCachedPromise(async () => {
+    const { data, error } = await client.GET("/tags");
+    if (error) throw error;
+    return data?.tags || [];
+  });
 
   const transactions = (data ?? []).sort((a: Transaction, b: Transaction) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -91,16 +93,20 @@ export default function Command() {
   async function handleUpdateTransaction(
     transactionId: number,
     categoryId: string,
-    tagNames: string[],
+    tagNames: string[]
   ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)
       .filter((id): id is number => id !== undefined);
 
-    await api.updateTransaction(transactionId, {
-      category_id: parseInt(categoryId),
-      tags: tagIds,
+    const { error } = await client.PUT("/transactions/{id}", {
+      params: { path: { id: transactionId } },
+      body: {
+        category_id: parseInt(categoryId),
+        tags: tagIds,
+      },
     });
+    if (error) throw error;
     revalidate();
     setEditingTransaction(null);
   }
@@ -108,9 +114,13 @@ export default function Command() {
   async function handleToggleReviewStatus(transaction: Transaction) {
     const newStatus =
       transaction.status === "reviewed" ? "unreviewed" : "reviewed";
-    await api.updateTransaction(transaction.id, {
-      status: newStatus,
+    const { error } = await client.PUT("/transactions/{id}", {
+      params: { path: { id: transaction.id } },
+      body: {
+        status: newStatus,
+      },
     });
+    if (error) throw error;
     await showToast({
       style: Toast.Style.Success,
       title:

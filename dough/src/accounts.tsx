@@ -3,19 +3,13 @@ import {
   Action,
   Icon,
   List,
-  getPreferenceValues,
   Color,
   showToast,
   Toast,
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
-import { useMemo } from "react";
-import { LunchMoneyService, ManualAccount, PlaidAccount } from "./api";
+import { ManualAccount, PlaidAccount, useLunchMoney } from "./api";
 import { formatBalance } from "./mockData";
-
-interface Preferences {
-  apiKey: string;
-}
 
 interface Account {
   id: number;
@@ -64,14 +58,19 @@ function getAccountColor(balance: number, typeName: string): Color {
 }
 
 export default function Command() {
-  const { apiKey } = getPreferenceValues<Preferences>();
-  const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
+  const client = useLunchMoney();
 
   const { isLoading, data, revalidate } = useCachedPromise(async () => {
-    const [manualAccounts, plaidAccounts] = await Promise.all([
-      api.getManualAccounts(),
-      api.getPlaidAccounts(),
+    const [manualAccountsRes, plaidAccountsRes] = await Promise.all([
+      client.GET("/manual_accounts"),
+      client.GET("/plaid_accounts"),
     ]);
+
+    if (manualAccountsRes.error) throw manualAccountsRes.error;
+    if (plaidAccountsRes.error) throw plaidAccountsRes.error;
+
+    const manualAccounts = manualAccountsRes.data?.manual_accounts || [];
+    const plaidAccounts = plaidAccountsRes.data?.plaid_accounts || [];
 
     // Combine both types of accounts
     const allAccounts: Account[] = [
@@ -116,7 +115,8 @@ export default function Command() {
       });
 
       // Trigger fetch from Plaid
-      await api.triggerPlaidSync();
+      const { error } = await client.POST("/plaid_accounts/fetch");
+      if (error) throw error;
 
       await showToast({
         style: Toast.Style.Success,
@@ -165,7 +165,7 @@ export default function Command() {
   });
 
   const otherAccounts = activeAccounts.filter(
-    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc),
+    (acc) => !cashAccounts.includes(acc) && !creditAccounts.includes(acc)
   );
 
   // Calculate net worth (assets minus liabilities)

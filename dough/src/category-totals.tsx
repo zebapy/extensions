@@ -1,18 +1,11 @@
-import {
-  ActionPanel,
-  Action,
-  Icon,
-  List,
-  getPreferenceValues,
-  Color,
-} from "@raycast/api";
+import { ActionPanel, Action, Icon, List, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import {
-  LunchMoneyService,
   type Transaction,
   type Category,
   type Tag,
+  useLunchMoney,
 } from "./api";
 import { formatAmount } from "./mockData";
 import {
@@ -21,10 +14,6 @@ import {
   getDateRangeForFilter,
   DateRangeDropdown,
 } from "./components";
-
-interface Preferences {
-  apiKey: string;
-}
 
 interface CategoryTotal {
   name: string;
@@ -37,7 +26,7 @@ interface CategoryTotal {
 
 function calculateCategoryTotals(
   transactions: Transaction[],
-  categories: Category[],
+  categories: Category[]
 ): CategoryTotal[] {
   const categoryMap = new Map<
     string,
@@ -85,7 +74,7 @@ function calculateCategoryTotals(
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       ),
       isIncome: data.isIncome,
     }))
@@ -127,34 +116,40 @@ function CategoryTransactionsList({
 }
 
 export default function Command() {
-  const { apiKey } = getPreferenceValues<Preferences>();
+  const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
   const { start, end } = useMemo(
     () => getDateRangeForFilter(selectedMonth),
-    [selectedMonth],
+    [selectedMonth]
   );
-
-  const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
 
   const { isLoading, data } = useCachedPromise(
-    async (startDate: string, endDate: string) =>
-      api.getTransactions({
-        start_date: startDate,
-        end_date: endDate,
-      }),
-    [start, end],
+    async (startDate: string, endDate: string) => {
+      const { data, error } = await client.GET("/transactions", {
+        params: { query: { start_date: startDate, end_date: endDate } },
+      });
+      if (error) throw error;
+      return data?.transactions || [];
+    },
+    [start, end]
   );
 
-  const { data: categoriesData } = useCachedPromise(async () =>
-    api.getCategories(),
-  );
+  const { data: categoriesData } = useCachedPromise(async () => {
+    const { data, error } = await client.GET("/categories");
+    if (error) throw error;
+    return data?.categories || [];
+  });
 
-  const { data: tagsData } = useCachedPromise(async () => api.getTags());
+  const { data: tagsData } = useCachedPromise(async () => {
+    const { data, error } = await client.GET("/tags");
+    if (error) throw error;
+    return data?.tags || [];
+  });
 
   const transactions = data ?? [];
   const categories = categoriesData ?? [];
