@@ -90,7 +90,9 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
   });
 
   expenses.forEach((transaction) => {
-    const amount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
+    const amount = parseFloat(
+      formatAmount(transaction.amount, transaction.is_income)
+    );
     const categoryName = transaction.category_name || "Uncategorized";
 
     grandTotal += amount;
@@ -114,7 +116,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       ),
     }))
     .sort((a, b) => b.total - a.total);
@@ -140,7 +142,9 @@ function CategoryTransactionsList({
       searchBarPlaceholder="Search transactions..."
     >
       {category.transactions.map((transaction) => {
-        const amount = parseFloat(formatAmount(transaction.amount, transaction.is_income));
+        const amount = parseFloat(
+          formatAmount(transaction.amount, transaction.is_income)
+        );
         const formattedAmount = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
@@ -182,7 +186,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
@@ -196,7 +200,7 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end],
+    [start, end]
   );
 
   const transactions = data?.transactions ?? [];
