@@ -12,6 +12,151 @@ import { useState } from "react";
 import { formatAmount } from "./mockData";
 import type { Transaction, Category, Tag } from "./api";
 
+export function generateMonthOptions() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-11
+
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const options: { value: string; title: string }[] = [];
+
+  // Start from current month and work backwards through the year
+  for (let i = currentMonth; i >= 0; i--) {
+    const monthName = months[i];
+    const value = `${currentYear}-${String(i + 1).padStart(2, "0")}`;
+    options.push({
+      value,
+      title: `${monthName} ${currentYear}`,
+    });
+  }
+
+  return options;
+}
+
+export function getDateRange(monthValue: string) {
+  const [year, month] = monthValue.split("-").map(Number);
+
+  // First day of the month
+  const start = new Date(year, month - 1, 1);
+
+  // Last day of the month
+  const end = new Date(year, month, 0);
+
+  return {
+    start: start.toISOString().split("T")[0],
+    end: end.toISOString().split("T")[0],
+  };
+}
+
+export function getDateRangeForFilter(filter: string): {
+  start: string;
+  end: string;
+} {
+  const now = new Date();
+  const end = now.toISOString().split("T")[0];
+  let start: Date;
+
+  switch (filter) {
+    case "7days":
+      start = new Date();
+      start.setDate(start.getDate() - 7);
+      break;
+    case "30days":
+      start = new Date();
+      start.setDate(start.getDate() - 30);
+      break;
+    case "90days":
+      start = new Date();
+      start.setDate(start.getDate() - 90);
+      break;
+    case "thisMonth":
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case "lastMonth": {
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      return {
+        start: lastMonth.toISOString().split("T")[0],
+        end: lastMonthEnd.toISOString().split("T")[0],
+      };
+    }
+    case "thisYear":
+      start = new Date(now.getFullYear(), 0, 1);
+      break;
+    case "lastYear": {
+      const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+      const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
+      return {
+        start: lastYearStart.toISOString().split("T")[0],
+        end: lastYearEnd.toISOString().split("T")[0],
+      };
+    }
+    case "allTime":
+      start = new Date();
+      start.setFullYear(start.getFullYear() - 2);
+      break;
+    default:
+      return getDateRange(filter);
+  }
+
+  return {
+    start: start.toISOString().split("T")[0],
+    end,
+  };
+}
+
+export function DateRangeDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const monthOptions = generateMonthOptions();
+
+  return (
+    <List.Dropdown
+      tooltip="Select Time Range"
+      value={value}
+      onChange={onChange}
+    >
+      <List.Dropdown.Section title="Quick Ranges">
+        <List.Dropdown.Item value="7days" title="Last 7 Days" />
+        <List.Dropdown.Item value="30days" title="Last 30 Days" />
+        <List.Dropdown.Item value="90days" title="Last 90 Days" />
+        <List.Dropdown.Item value="thisMonth" title="This Month" />
+        <List.Dropdown.Item value="lastMonth" title="Last Month" />
+        <List.Dropdown.Item value="thisYear" title="This Year" />
+        <List.Dropdown.Item value="lastYear" title="Last Year" />
+        <List.Dropdown.Item value="allTime" title="All Time" />
+      </List.Dropdown.Section>
+      <List.Dropdown.Section title="By Month">
+        {monthOptions.map((option) => (
+          <List.Dropdown.Item
+            key={option.value}
+            value={option.value}
+            title={option.title}
+          />
+        ))}
+      </List.Dropdown.Section>
+    </List.Dropdown>
+  );
+}
+
 export interface TransactionListItemProps {
   transaction: Transaction;
   onToggleReviewStatus?: (transaction: Transaction) => void;
