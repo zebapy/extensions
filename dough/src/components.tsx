@@ -159,6 +159,8 @@ export function DateRangeDropdown({
 
 export interface TransactionListItemProps {
   transaction: Transaction;
+  categories?: Category[];
+  tags?: Tag[];
   onToggleReviewStatus?: (transaction: Transaction) => void;
   onEdit?: (transaction: Transaction) => void;
   lunchMoneyUrl?: string;
@@ -167,6 +169,8 @@ export interface TransactionListItemProps {
 
 export function TransactionListItem({
   transaction,
+  categories = [],
+  tags = [],
   onToggleReviewStatus,
   onEdit,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
@@ -177,14 +181,22 @@ export function TransactionListItem({
       ? parseFloat(transaction.amount)
       : transaction.amount;
   const isExpense = originalAmount > 0;
-  const displayAmount = parseFloat(
-    formatAmount(transaction.amount, transaction.is_income)
-  );
+
+  // Get category to check if it's income
+  const category = categories.find((c) => c.id === transaction.category_id);
+  const isIncome = category?.is_income ?? false;
+
+  const displayAmount = parseFloat(formatAmount(transaction.amount, isIncome));
   const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const isReviewed = transaction.status === "cleared";
+  const isReviewed = transaction.status === "reviewed";
+
+  // Get tag objects from tag_ids
+  const transactionTags = transaction.tag_ids
+    .map((tagId) => tags.find((t) => t.id === tagId))
+    .filter((t): t is Tag => t !== undefined);
 
   const accessories = [
-    ...transaction.tags.map((tag) => ({ tag: { value: tag.name } })),
+    ...transactionTags.map((tag) => ({ tag: { value: tag.name } })),
     { text: formattedAmount },
     { text: transaction.date },
     {
@@ -196,6 +208,8 @@ export function TransactionListItem({
   const defaultDetailTarget = customDetailTarget || (
     <TransactionDetail
       transaction={transaction}
+      categories={categories}
+      tags={tags}
       lunchMoneyUrl={lunchMoneyUrl}
     />
   );
@@ -208,7 +222,7 @@ export function TransactionListItem({
         tintColor: isExpense ? "#DC143C" : "#228B22",
       }}
       title={transaction.payee || "Unknown"}
-      subtitle={transaction.category_name || "Uncategorized"}
+      subtitle={category?.name || "Uncategorized"}
       accessories={accessories}
       actions={
         <ActionPanel>
@@ -281,8 +295,13 @@ export function EditTransactionForm({
   }
 
   const currentCategory = categories.find(
-    (c) => c.name === transaction.category_name
+    (c) => c.id === transaction.category_id
   );
+
+  // Get tag names from tag_ids
+  const transactionTags = transaction.tag_ids
+    .map((tagId) => tags.find((t) => t.id === tagId))
+    .filter((t): t is Tag => t !== undefined);
 
   return (
     <Form
@@ -310,7 +329,7 @@ export function EditTransactionForm({
       <Form.TagPicker
         id="tags"
         title="Tags"
-        defaultValue={transaction.tags.map((t) => t.name)}
+        defaultValue={transactionTags.map((t) => t.name)}
       >
         {tags.map((tag) => (
           <Form.TagPicker.Item key={tag.id} value={tag.name} title={tag.name} />
@@ -322,11 +341,15 @@ export function EditTransactionForm({
 
 export function TransactionDetail({
   transaction,
+  categories = [],
+  tags = [],
   onBack,
   onEdit,
   lunchMoneyUrl,
 }: {
   transaction: Transaction;
+  categories?: Category[];
+  tags?: Tag[];
   onBack?: () => void;
   onEdit?: () => void;
   lunchMoneyUrl?: string;
@@ -336,11 +359,19 @@ export function TransactionDetail({
       ? parseFloat(transaction.amount)
       : transaction.amount;
   const isExpense = originalAmount > 0;
-  const displayAmount = parseFloat(
-    formatAmount(transaction.amount, transaction.is_income)
-  );
+
+  // Get category to check if it's income
+  const category = categories.find((c) => c.id === transaction.category_id);
+  const isIncome = category?.is_income ?? false;
+
+  const displayAmount = parseFloat(formatAmount(transaction.amount, isIncome));
   const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const isReviewed = transaction.status === "cleared";
+  const isReviewed = transaction.status === "reviewed";
+
+  // Get tag objects from tag_ids
+  const transactionTags = transaction.tag_ids
+    .map((tagId) => tags.find((t) => t.id === tagId))
+    .filter((t): t is Tag => t !== undefined);
 
   return (
     <Detail
@@ -373,13 +404,13 @@ export function TransactionDetail({
 
           <Detail.Metadata.Label
             title="Category"
-            text={transaction.category_name || "Uncategorized"}
+            text={category?.name || "Uncategorized"}
             icon={Icon.Tag}
           />
 
-          {transaction.tags.length > 0 && (
+          {transactionTags.length > 0 && (
             <Detail.Metadata.TagList title="Tags">
-              {transaction.tags.map((tag) => (
+              {transactionTags.map((tag) => (
                 <Detail.Metadata.TagList.Item key={tag.id} text={tag.name} />
               ))}
             </Detail.Metadata.TagList>

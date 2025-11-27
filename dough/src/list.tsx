@@ -49,11 +49,12 @@ export default function Command() {
 
   const { data: tagsData } = useCachedPromise(async () => api.getTags());
 
-  const transactions = (data?.transactions ?? []).sort(
-    (a: Transaction, b: Transaction) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    }
-  );
+  const transactions = (data ?? []).sort((a: Transaction, b: Transaction) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  const categories = categoriesData ?? [];
+  const tags = tagsData ?? [];
 
   // Filter transactions based on search text
   const filteredTransactions = useMemo(() => {
@@ -64,25 +65,28 @@ export default function Command() {
     const query = searchText.toLowerCase();
     return transactions.filter((transaction: Transaction) => {
       const payee = transaction.payee?.toLowerCase() || "";
-      const category = transaction.category_name?.toLowerCase() || "";
       const amount = transaction.amount.toString();
       const notes = transaction.notes?.toLowerCase() || "";
-      const tagNames = transaction.tags
+      // Get tag names from tag_ids
+      const transactionTags = transaction.tag_ids
+        .map((tagId) => tags.find((t) => t.id === tagId))
+        .filter((t): t is Tag => t !== undefined);
+      const tagNames = transactionTags
         .map((t) => t.name.toLowerCase())
         .join(" ");
+      // Get category name from category_id
+      const category = categories.find((c) => c.id === transaction.category_id);
+      const categoryName = category?.name.toLowerCase() || "";
 
       return (
         payee.includes(query) ||
-        category.includes(query) ||
+        categoryName.includes(query) ||
         amount.includes(query) ||
         notes.includes(query) ||
         tagNames.includes(query)
       );
     });
-  }, [transactions, searchText]);
-
-  const categories = categoriesData?.categories ?? [];
-  const tags = tagsData ?? [];
+  }, [transactions, searchText, categories, tags]);
 
   async function handleUpdateTransaction(
     transactionId: number,
@@ -103,14 +107,16 @@ export default function Command() {
 
   async function handleToggleReviewStatus(transaction: Transaction) {
     const newStatus =
-      transaction.status === "cleared" ? "uncleared" : "cleared";
+      transaction.status === "reviewed" ? "unreviewed" : "reviewed";
     await api.updateTransaction(transaction.id, {
       status: newStatus,
     });
     await showToast({
       style: Toast.Style.Success,
       title:
-        newStatus === "cleared" ? "Marked as reviewed" : "Marked as unreviewed",
+        newStatus === "reviewed"
+          ? "Marked as reviewed"
+          : "Marked as unreviewed",
     });
     revalidate();
   }
@@ -137,6 +143,8 @@ export default function Command() {
     return (
       <TransactionDetail
         transaction={selectedTransaction}
+        categories={categories}
+        tags={tags}
         onBack={() => setSelectedTransaction(null)}
         onEdit={() => {
           setEditingTransaction(selectedTransaction);
@@ -166,6 +174,8 @@ export default function Command() {
           <TransactionListItem
             key={transaction.id}
             transaction={transaction}
+            categories={categories}
+            tags={tags}
             onToggleReviewStatus={handleToggleReviewStatus}
             onEdit={setEditingTransaction}
             lunchMoneyUrl={lunchMoneyUrl}

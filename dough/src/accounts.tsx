@@ -10,7 +10,7 @@ import {
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useMemo } from "react";
-import { LunchMoneyService, Asset, PlaidAccount } from "./api";
+import { LunchMoneyService, ManualAccount, PlaidAccount } from "./api";
 import { formatBalance } from "./mockData";
 
 interface Preferences {
@@ -68,29 +68,27 @@ export default function Command() {
   const api = useMemo(() => new LunchMoneyService(apiKey), [apiKey]);
 
   const { isLoading, data, revalidate } = useCachedPromise(async () => {
-    const [assetsResponse, plaidResponse] = await Promise.all([
-      api.getAssets(),
+    const [manualAccounts, plaidAccounts] = await Promise.all([
+      api.getManualAccounts(),
       api.getPlaidAccounts(),
     ]);
 
-    console.log(assetsResponse, plaidResponse);
-
     // Combine both types of accounts
     const allAccounts: Account[] = [
-      ...(assetsResponse.assets || []).map((asset: Asset) => ({
-        id: asset.id,
-        type_name: asset.type_name,
-        subtype_name: asset.subtype_name ?? null,
-        name: asset.name,
-        display_name: asset.display_name ?? null,
-        balance: asset.balance,
-        balance_as_of: asset.balance_as_of ?? new Date().toISOString(),
-        currency: asset.currency,
-        institution_name: asset.institution_name ?? null,
-        closed_on: asset.closed_on ?? null,
-        exclude_transactions: asset.exclude_transactions,
+      ...(manualAccounts || []).map((account: ManualAccount) => ({
+        id: account.id,
+        type_name: account.type,
+        subtype_name: account.subtype ?? null,
+        name: account.name,
+        display_name: account.display_name ?? null,
+        balance: account.balance,
+        balance_as_of: account.balance_as_of ?? new Date().toISOString(),
+        currency: account.currency,
+        institution_name: account.institution_name ?? null,
+        closed_on: account.closed_on ?? null,
+        exclude_transactions: account.exclude_from_transactions,
       })),
-      ...(plaidResponse.plaid_accounts || []).map((plaid: PlaidAccount) => ({
+      ...(plaidAccounts || []).map((plaid: PlaidAccount) => ({
         id: plaid.id,
         type_name: plaid.type || "Bank Account",
         subtype_name: plaid.subtype ?? null,
@@ -118,13 +116,7 @@ export default function Command() {
       });
 
       // Trigger fetch from Plaid
-      await fetch("https://dev.lunchmoney.app/v1/plaid_accounts/fetch", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
+      await api.triggerPlaidSync();
 
       await showToast({
         style: Toast.Style.Success,

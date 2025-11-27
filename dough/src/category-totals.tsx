@@ -8,7 +8,12 @@ import {
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { LunchMoneyService, type Transaction } from "./api";
+import {
+  LunchMoneyService,
+  type Transaction,
+  type Category,
+  type Tag,
+} from "./api";
 import { formatAmount } from "./mockData";
 import {
   TransactionListItem,
@@ -30,7 +35,10 @@ interface CategoryTotal {
   isIncome: boolean;
 }
 
-function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
+function calculateCategoryTotals(
+  transactions: Transaction[],
+  categories: Category[]
+): CategoryTotal[] {
   const categoryMap = new Map<
     string,
     {
@@ -44,11 +52,12 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
 
   // Group all transactions by category
   transactions.forEach((transaction) => {
-    const amount = parseFloat(
-      formatAmount(transaction.amount, transaction.is_income)
-    );
-    const categoryName = transaction.category_name || "Uncategorized";
-    const isIncome = transaction.is_income || false;
+    // Look up category to get name and is_income
+    const category = categories.find((c) => c.id === transaction.category_id);
+    const isIncome = category?.is_income ?? false;
+
+    const amount = parseFloat(formatAmount(transaction.amount, isIncome));
+    const categoryName = category?.name || "Uncategorized";
 
     // Only count non-income towards grand total
     if (!isIncome) {
@@ -85,7 +94,15 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
   return totals;
 }
 
-function CategoryTransactionsList({ category }: { category: CategoryTotal }) {
+function CategoryTransactionsList({
+  category,
+  categories,
+  tags,
+}: {
+  category: CategoryTotal;
+  categories: Category[];
+  tags: Tag[];
+}) {
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -100,6 +117,8 @@ function CategoryTransactionsList({ category }: { category: CategoryTotal }) {
         <TransactionListItem
           key={transaction.id}
           transaction={transaction}
+          categories={categories}
+          tags={tags}
           lunchMoneyUrl={`https://my.lunchmoney.app/transactions/${transaction.id}`}
         />
       ))}
@@ -131,8 +150,16 @@ export default function Command() {
     [start, end]
   );
 
-  const transactions = data?.transactions ?? [];
-  const categoryTotals = calculateCategoryTotals(transactions);
+  const { data: categoriesData } = useCachedPromise(async () =>
+    api.getCategories()
+  );
+
+  const { data: tagsData } = useCachedPromise(async () => api.getTags());
+
+  const transactions = data ?? [];
+  const categories = categoriesData ?? [];
+  const tags = tagsData ?? [];
+  const categoryTotals = calculateCategoryTotals(transactions, categories);
 
   // Separate income and expenses
   const incomeTotals = categoryTotals.filter((cat) => cat.isIncome);
@@ -152,7 +179,13 @@ export default function Command() {
   }).format(totalExpenses);
 
   if (selectedCategory) {
-    return <CategoryTransactionsList category={selectedCategory} />;
+    return (
+      <CategoryTransactionsList
+        category={selectedCategory}
+        categories={categories}
+        tags={tags}
+      />
+    );
   }
 
   return (
