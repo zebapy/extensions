@@ -15,7 +15,7 @@ function getMockAmount(): number {
 
 export function formatAmount(
   amount: string | number,
-  isIncome?: boolean
+  isIncome?: boolean,
 ): string {
   if (!isMockMode) {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;

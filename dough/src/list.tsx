@@ -110,7 +110,7 @@ function EditTransactionForm({
   }
 
   const currentCategory = categories.find(
-    (c) => c.name === transaction.category_name
+    (c) => c.name === transaction.category_name,
   );
 
   return (
@@ -166,7 +166,7 @@ function TransactionDetail({
       : transaction.amount;
   const isExpense = originalAmount > 0;
   const displayAmount = parseFloat(
-    formatAmount(transaction.amount, transaction.is_income)
+    formatAmount(transaction.amount, transaction.is_income),
   );
   const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const isReviewed = transaction.status === "cleared";
@@ -272,7 +272,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value
+    monthOptions[0].value,
   );
   const { start, end } = getDateRange(selectedMonth);
   const [selectedTransaction, setSelectedTransaction] =
@@ -288,11 +288,11 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end]
+    [start, end],
   );
 
   const { data: categoriesData } = useCachedPromise(async () =>
-    api.getCategories()
+    api.getCategories(),
   );
 
   const { data: tagsData } = useCachedPromise(async () => api.getTags());
@@ -300,7 +300,7 @@ export default function Command() {
   const transactions = (data?.transactions ?? []).sort(
     (a: Transaction, b: Transaction) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
-    }
+    },
   );
 
   const categories = categoriesData?.categories ?? [];
@@ -309,7 +309,7 @@ export default function Command() {
   async function handleUpdateTransaction(
     transactionId: number,
     categoryId: string,
-    tagNames: string[]
+    tagNames: string[],
   ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)
@@ -391,7 +391,7 @@ export default function Command() {
             : transaction.amount;
         const isExpense = originalAmount > 0;
         const displayAmount = parseFloat(
-          formatAmount(transaction.amount, transaction.is_income)
+          formatAmount(transaction.amount, transaction.is_income),
         );
         const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         const isReviewed = transaction.status === "cleared";
@@ -516,7 +516,7 @@ export default function Command() {
                                   handleUpdateTransaction(
                                     transaction.id,
                                     categoryId,
-                                    tagIds
+                                    tagIds,
                                   )
                                 }
                               />
