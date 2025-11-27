@@ -109,7 +109,7 @@ function EditTransactionForm({
   }
 
   const currentCategory = categories.find(
-    (c) => c.name === transaction.category_name,
+    (c) => c.name === transaction.category_name
   );
 
   return (
@@ -165,6 +165,7 @@ function TransactionDetail({
       : transaction.amount;
   const isExpense = amount > 0;
   const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(amount).toFixed(2)}`;
+  const isReviewed = transaction.status === "cleared";
 
   const { start, end } = getDateRange(monthValue);
   const [year, month] = monthValue.split("-");
@@ -176,19 +177,36 @@ function TransactionDetail({
       markdown={`# ${transaction.payee}\n\n${formattedAmount}`}
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label title="Amount" text={formattedAmount} />
           <Detail.Metadata.Label
-            title="Type"
-            text={isExpense ? "Expense" : "Income"}
-            icon={isExpense ? Icon.ArrowDown : Icon.ArrowUp}
+            title="Amount"
+            text={formattedAmount}
+            icon={{
+              source: isExpense ? Icon.ArrowDown : Icon.ArrowUp,
+              tintColor: isExpense ? "#FF0000" : "#00FF00",
+            }}
           />
+          <Detail.Metadata.Label
+            title="Date"
+            text={transaction.date}
+            icon={Icon.Calendar}
+          />
+
           <Detail.Metadata.Separator />
-          <Detail.Metadata.Label title="Date" text={transaction.date} />
+
+          <Detail.Metadata.TagList title="Status">
+            <Detail.Metadata.TagList.Item
+              text={isReviewed ? "Reviewed" : "Unreviewed"}
+              color={isReviewed ? "#00FF00" : "#FFA500"}
+              icon={isReviewed ? Icon.CheckCircle : Icon.Circle}
+            />
+          </Detail.Metadata.TagList>
+
           <Detail.Metadata.Label
             title="Category"
             text={transaction.category_name || "Uncategorized"}
             icon={Icon.Tag}
           />
+
           {transaction.tags.length > 0 && (
             <Detail.Metadata.TagList title="Tags">
               {transaction.tags.map((tag) => (
@@ -196,14 +214,25 @@ function TransactionDetail({
               ))}
             </Detail.Metadata.TagList>
           )}
+
           <Detail.Metadata.Separator />
+
           <Detail.Metadata.Label
             title="Currency"
             text={transaction.currency.toUpperCase()}
+            icon={Icon.BankNote}
           />
           <Detail.Metadata.Label
             title="Transaction ID"
             text={transaction.id.toString()}
+          />
+
+          <Detail.Metadata.Separator />
+
+          <Detail.Metadata.Link
+            title="View in Lunch Money"
+            target={lunchMoneyUrl}
+            text="Open Transaction"
           />
         </Detail.Metadata>
       }
@@ -239,7 +268,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const { start, end } = getDateRange(selectedMonth);
   const [selectedTransaction, setSelectedTransaction] =
@@ -255,11 +284,11 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end],
+    [start, end]
   );
 
   const { data: categoriesData } = useCachedPromise(async () =>
-    api.getCategories(),
+    api.getCategories()
   );
 
   const { data: tagsData } = useCachedPromise(async () => api.getTags());
@@ -267,7 +296,7 @@ export default function Command() {
   const transactions = (data?.transactions ?? []).sort(
     (a: Transaction, b: Transaction) => {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
-    },
+    }
   );
 
   const categories = categoriesData?.categories ?? [];
@@ -276,7 +305,7 @@ export default function Command() {
   async function handleUpdateTransaction(
     transactionId: number,
     categoryId: string,
-    tagNames: string[],
+    tagNames: string[]
   ) {
     const tagIds = tagNames
       .map((name) => tags.find((t: Tag) => t.name === name)?.id)
@@ -376,10 +405,130 @@ export default function Command() {
             ]}
             actions={
               <ActionPanel>
-                <Action
+                <Action.Push
                   title="View Details"
                   icon={Icon.Eye}
-                  onAction={() => setSelectedTransaction(transaction)}
+                  target={
+                    <Detail
+                      markdown={`# ${transaction.payee}\n\n${formattedAmount}`}
+                      metadata={
+                        <Detail.Metadata>
+                          <Detail.Metadata.Label
+                            title="Amount"
+                            text={formattedAmount}
+                            icon={{
+                              source: isExpense ? Icon.ArrowDown : Icon.ArrowUp,
+                              tintColor: isExpense ? "#FF0000" : "#00FF00",
+                            }}
+                          />
+                          <Detail.Metadata.Label
+                            title="Date"
+                            text={transaction.date}
+                            icon={Icon.Calendar}
+                          />
+
+                          <Detail.Metadata.Separator />
+
+                          <Detail.Metadata.TagList title="Status">
+                            <Detail.Metadata.TagList.Item
+                              text={isReviewed ? "Reviewed" : "Unreviewed"}
+                              color={isReviewed ? "#00FF00" : "#FFA500"}
+                              icon={isReviewed ? Icon.CheckCircle : Icon.Circle}
+                            />
+                          </Detail.Metadata.TagList>
+
+                          <Detail.Metadata.Label
+                            title="Category"
+                            text={transaction.category_name || "Uncategorized"}
+                            icon={Icon.Tag}
+                          />
+
+                          {transaction.tags.length > 0 && (
+                            <Detail.Metadata.TagList title="Tags">
+                              {transaction.tags.map((tag) => (
+                                <Detail.Metadata.TagList.Item
+                                  key={tag.id}
+                                  text={tag.name}
+                                />
+                              ))}
+                            </Detail.Metadata.TagList>
+                          )}
+
+                          <Detail.Metadata.Separator />
+
+                          <Detail.Metadata.Label
+                            title="Currency"
+                            text={transaction.currency.toUpperCase()}
+                            icon={Icon.BankNote}
+                          />
+                          <Detail.Metadata.Label
+                            title="Transaction ID"
+                            text={transaction.id.toString()}
+                          />
+
+                          <Detail.Metadata.Separator />
+
+                          <Detail.Metadata.Link
+                            title="View in Lunch Money"
+                            target={(() => {
+                              const [year, month] = selectedMonth.split("-");
+                              const category = transaction.category_id || "";
+                              return `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
+                            })()}
+                            text="Open Transaction"
+                          />
+                        </Detail.Metadata>
+                      }
+                      actions={
+                        <ActionPanel>
+                          <Action
+                            title={
+                              isReviewed
+                                ? "Mark as Unreviewed"
+                                : "Mark as Reviewed"
+                            }
+                            icon={isReviewed ? Icon.Circle : Icon.CheckCircle}
+                            shortcut={{ modifiers: ["cmd"], key: "r" }}
+                            onAction={() =>
+                              handleToggleReviewStatus(transaction)
+                            }
+                          />
+                          <Action.Push
+                            title="Edit Transaction"
+                            icon={Icon.Pencil}
+                            shortcut={{ modifiers: ["cmd"], key: "e" }}
+                            target={
+                              <EditTransactionForm
+                                transaction={transaction}
+                                categories={categories}
+                                tags={tags}
+                                onSubmit={(categoryId, tagIds) =>
+                                  handleUpdateTransaction(
+                                    transaction.id,
+                                    categoryId,
+                                    tagIds
+                                  )
+                                }
+                              />
+                            }
+                          />
+                          <Action.OpenInBrowser
+                            title="Open in Lunch Money"
+                            url={(() => {
+                              const [year, month] = selectedMonth.split("-");
+                              const category = transaction.category_id || "";
+                              return `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
+                            })()}
+                            shortcut={{ modifiers: ["cmd"], key: "o" }}
+                          />
+                          <Action.CopyToClipboard
+                            content={`${transaction.payee} - ${formattedAmount}`}
+                            title="Copy Transaction"
+                          />
+                        </ActionPanel>
+                      }
+                    />
+                  }
                 />
                 <Action
                   title={isReviewed ? "Mark as Unreviewed" : "Mark as Reviewed"}
