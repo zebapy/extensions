@@ -4,6 +4,7 @@ import {
   Icon,
   List,
   getPreferenceValues,
+  Color,
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
@@ -115,7 +116,7 @@ function calculateCategoryTotals(transactions: Transaction[]): CategoryTotal[] {
       count: data.count,
       percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
       transactions: data.transactions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       ),
     }))
     .sort((a, b) => b.total - a.total);
@@ -130,9 +131,14 @@ function CategoryTransactionsList({
   category: CategoryTotal;
   onBack: () => void;
 }) {
+  const formattedTotal = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(category.total);
+
   return (
     <List
-      navigationTitle={`${category.name} - $${category.total.toFixed(2)}`}
+      navigationTitle={`${category.name} - ${formattedTotal}`}
       searchBarPlaceholder="Search transactions..."
     >
       {category.transactions.map((transaction) => {
@@ -140,7 +146,10 @@ function CategoryTransactionsList({
           typeof transaction.amount === "string"
             ? parseFloat(transaction.amount)
             : transaction.amount;
-        const formattedAmount = `-$${Math.abs(amount).toFixed(2)}`;
+        const formattedAmount = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
 
         return (
           <List.Item
@@ -178,7 +187,7 @@ export default function Command() {
   const { apiKey } = getPreferenceValues<Preferences>();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    monthOptions[0].value,
+    monthOptions[0].value
   );
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryTotal | null>(null);
@@ -192,12 +201,16 @@ export default function Command() {
         start_date: startDate,
         end_date: endDate,
       }),
-    [start, end],
+    [start, end]
   );
 
   const transactions = data?.transactions ?? [];
   const categoryTotals = calculateCategoryTotals(transactions);
   const grandTotal = categoryTotals.reduce((sum, cat) => sum + cat.total, 0);
+  const formattedGrandTotal = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(grandTotal);
 
   if (selectedCategory) {
     return (
@@ -228,32 +241,45 @@ export default function Command() {
         </List.Dropdown>
       }
     >
-      <List.Section title={`Total Spending: $${grandTotal.toFixed(2)}`}>
-        {categoryTotals.map((category) => (
-          <List.Item
-            key={category.name}
-            icon={Icon.Tag}
-            title={category.name}
-            subtitle={`${category.count} transaction${category.count !== 1 ? "s" : ""}`}
-            accessories={[
-              { text: `${category.percentage.toFixed(1)}%` },
-              { text: `$${category.total.toFixed(2)}` },
-            ]}
-            actions={
-              <ActionPanel>
-                <Action
-                  title="View Transactions"
-                  icon={Icon.List}
-                  onAction={() => setSelectedCategory(category)}
-                />
-                <Action.CopyToClipboard
-                  content={`${category.name}: $${category.total.toFixed(2)} (${category.percentage.toFixed(1)}%)`}
-                  title="Copy Category Total"
-                />
-              </ActionPanel>
-            }
-          />
-        ))}
+      <List.Section title={`Total Spending: ${formattedGrandTotal}`}>
+        {categoryTotals.map((category) => {
+          const formattedTotal = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(category.total);
+
+          return (
+            <List.Item
+              key={category.name}
+              icon={{ source: Icon.Tag, tintColor: Color.Red }}
+              title={category.name}
+              subtitle={`${category.count} transaction${category.count !== 1 ? "s" : ""}`}
+              accessories={[
+                {
+                  text: `${category.percentage.toFixed(1)}%`,
+                  icon: { source: Icon.Percent, tintColor: Color.Orange },
+                },
+                {
+                  text: formattedTotal,
+                  icon: { source: Icon.BankNote, tintColor: Color.Red },
+                },
+              ]}
+              actions={
+                <ActionPanel>
+                  <Action
+                    title="View Transactions"
+                    icon={Icon.List}
+                    onAction={() => setSelectedCategory(category)}
+                  />
+                  <Action.CopyToClipboard
+                    content={`${category.name}: ${formattedTotal} (${category.percentage.toFixed(1)}%)`}
+                    title="Copy Category Total"
+                  />
+                </ActionPanel>
+              }
+            />
+          );
+        })}
       </List.Section>
     </List>
   );
