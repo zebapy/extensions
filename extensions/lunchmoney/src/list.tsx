@@ -1,7 +1,7 @@
-import { List, showToast, Toast } from "@raycast/api";
+import { List } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { type Transaction, type Tag, useLunchMoney } from "./api";
+import { type Transaction, useLunchMoney } from "./api";
 import { TransactionListItem, generateMonthOptions, getDateRangeForFilter, DateRangeDropdown } from "./components";
 
 function buildLunchMoneyUrl({
@@ -32,7 +32,6 @@ export default function Command() {
   const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
-  const [searchText, setSearchText] = useState("");
   const { start, end } = useMemo(() => getDateRangeForFilter(selectedMonth), [selectedMonth]);
 
   const { isLoading, data, revalidate } = useCachedPromise(
@@ -74,57 +73,8 @@ export default function Command() {
   const categories = categoriesData ?? [];
   const tags = tagsData ?? [];
 
-  // Filter transactions based on search text
-  const filteredTransactions = useMemo(() => {
-    if (!searchText.trim()) {
-      return transactions;
-    }
-
-    const query = searchText.toLowerCase();
-    return transactions.filter((transaction: Transaction) => {
-      const payee = transaction.payee?.toLowerCase() || "";
-      const amount = transaction.amount.toString();
-      const notes = transaction.notes?.toLowerCase() || "";
-      // Get tag names from tag_ids
-      const transactionTags = transaction.tag_ids
-        .map((tagId) => tags.find((t) => t.id === tagId))
-        .filter((t): t is Tag => t !== undefined);
-      const tagNames = transactionTags.map((t) => t.name.toLowerCase()).join(" ");
-      // Get category name from category_id
-      const category = categories.find((c) => c.id === transaction.category_id);
-      const categoryName = category?.name.toLowerCase() || "";
-
-      return (
-        payee.includes(query) ||
-        categoryName.includes(query) ||
-        amount.includes(query) ||
-        notes.includes(query) ||
-        tagNames.includes(query)
-      );
-    });
-  }, [transactions, searchText, categories, tags]);
-
-  async function handleToggleReviewStatus(transaction: Transaction) {
-    const newStatus = transaction.status === "reviewed" ? "unreviewed" : "reviewed";
-    const { error } = await client.PUT("/transactions/{id}", {
-      params: { path: { id: transaction.id } },
-      body: {
-        status: newStatus,
-      },
-    });
-    if (error) {
-      console.error("Toggle review status error:", error);
-      throw new Error(JSON.stringify(error));
-    }
-    await showToast({
-      style: Toast.Style.Success,
-      title: newStatus === "reviewed" ? "Marked as reviewed" : "Marked as unreviewed",
-    });
-    revalidate();
-  }
-
-  const pendingTransactions = filteredTransactions.filter((t: Transaction) => t.is_pending);
-  const nonPendingTransactions = filteredTransactions.filter((t: Transaction) => !t.is_pending);
+  const pendingTransactions = transactions.filter((t: Transaction) => t.is_pending);
+  const nonPendingTransactions = transactions.filter((t: Transaction) => !t.is_pending);
 
   // Group non-pending transactions by date
   const transactionsByDate = nonPendingTransactions.reduce(
@@ -147,10 +97,8 @@ export default function Command() {
   return (
     <List
       isLoading={isLoading}
-      searchBarPlaceholder="Search transactions by payee, category, amount, notes, or tags..."
-      onSearchTextChange={setSearchText}
+      searchBarPlaceholder="Search transactions..."
       searchBarAccessory={<DateRangeDropdown value={selectedMonth} onChange={setSelectedMonth} />}
-      throttle
     >
       {pendingTransactions.length > 0 && (
         <List.Section
@@ -166,7 +114,6 @@ export default function Command() {
                 transaction={transaction}
                 categories={categories}
                 tags={tags}
-                onToggleReviewStatus={handleToggleReviewStatus}
                 onRevalidate={revalidate}
                 lunchMoneyUrl={lunchMoneyUrl}
               />
@@ -198,7 +145,6 @@ export default function Command() {
                   transaction={transaction}
                   categories={categories}
                   tags={tags}
-                  onToggleReviewStatus={handleToggleReviewStatus}
                   onRevalidate={revalidate}
                   lunchMoneyUrl={lunchMoneyUrl}
                 />
