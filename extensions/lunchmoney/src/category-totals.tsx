@@ -2,9 +2,8 @@ import { ActionPanel, Action, Icon, List, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
-import { getAmountValue, formatCurrency, buildLunchMoneyUrl } from "./format";
+import { getAmountValue, formatCurrency, buildLunchMoneyUrl, formatTransactionsAsText } from "./format";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
-import { formatTransactionsAsText } from "./list";
 
 interface CategoryTotal {
   name: string;

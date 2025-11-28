@@ -1,6 +1,8 @@
 // Mock mode flag for randomizing amounts in screenshots
 // Set to true when taking screenshots to randomize amounts under $200
 
+import { Transaction, Category } from "./api";
+
 export const isMockMode = false; // Set to false for real data
 
 const mockValues = [
@@ -87,4 +89,32 @@ export function buildLunchMoneyUrl({
   url.searchParams.set("start_date", start);
   url.searchParams.set("time", "custom");
   return url.toString();
+}
+
+export function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
+  const data = transactions.map((t) => {
+    const category = categories.find((c) => c.id === t.category_id);
+    const isIncome = category?.is_income ?? false;
+    const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
+
+    return {
+      Date: t.date,
+      Payee: t.payee || "",
+      Amount: formattedAmount,
+      Category: category?.name || "Uncategorized",
+    };
+  });
+
+  if (data.length === 0) return "";
+
+  const headers = Object.keys(data[0]).join(",");
+  const rows = data
+    .map((row) =>
+      Object.values(row)
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(","),
+    )
+    .join("\n");
+
+  return `${headers}\n${rows}`;
 }
