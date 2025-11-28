@@ -219,11 +219,11 @@ export function TransactionListItem({
   // Determine icon based on status
   let statusIcon: { source: Icon; tintColor: Color };
   if (isPending) {
-    statusIcon = { source: Icon.Clock, tintColor: Color.Orange };
+    statusIcon = { source: Icon.Clock, tintColor: Color.SecondaryText };
   } else if (isRecurring) {
     statusIcon = { source: Icon.Repeat, tintColor: Color.Blue };
   } else if (isReviewed) {
-    statusIcon = { source: Icon.CheckCircle, tintColor: Color.Green };
+    statusIcon = { source: Icon.CheckCircle, tintColor: Color.SecondaryText };
   } else {
     statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
@@ -231,8 +231,8 @@ export function TransactionListItem({
   return (
     <List.Item
       key={transaction.id}
-      icon={statusIcon}
-      title={formattedAmount}
+      icon={isIncome ? { source: Icon.ArrowUp, tintColor: Color.Green } : statusIcon}
+      title={{ value: formattedAmount, tooltip: isIncome ? "Income" : "Expense" }}
       subtitle={transaction.payee || "Unknown"}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
