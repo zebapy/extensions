@@ -228,12 +228,23 @@ export function TransactionListItem({
     statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 
+  // Build keywords for filtering
+  const keywords = [
+    transaction.payee,
+    transaction.notes,
+    transaction.status,
+    category?.name,
+    isIncome ? "income" : "expense",
+    ...transactionTags.map((tag) => tag.name),
+  ].filter((k): k is string => Boolean(k));
+
   return (
     <List.Item
       key={transaction.id}
       icon={isIncome ? { source: Icon.ArrowUp, tintColor: Color.Green } : statusIcon}
       title={{ value: formattedAmount, tooltip: isIncome ? "Income" : "Expense" }}
       subtitle={transaction.payee || "Unknown"}
+      keywords={keywords}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
