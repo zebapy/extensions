@@ -60,23 +60,27 @@ export function getDateRangeForFilter(filter: string): {
 } {
   const now = new Date();
   let start: Date;
-  const end: Date = now;
+  let end: Date;
 
   switch (filter) {
     case "7days":
       start = new Date();
       start.setDate(start.getDate() - 7);
+      end = now;
       break;
     case "30days":
       start = new Date();
       start.setDate(start.getDate() - 30);
+      end = now;
       break;
     case "90days":
       start = new Date();
       start.setDate(start.getDate() - 90);
+      end = now;
       break;
     case "thisMonth":
       start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       break;
     case "lastMonth": {
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -88,6 +92,7 @@ export function getDateRangeForFilter(filter: string): {
     }
     case "thisYear":
       start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear(), 11, 31);
       break;
     case "lastYear": {
       const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
@@ -100,6 +105,7 @@ export function getDateRangeForFilter(filter: string): {
     case "allTime":
       start = new Date();
       start.setFullYear(start.getFullYear() - 2);
+      end = now;
       break;
     default:
       return getDateRange(filter);
