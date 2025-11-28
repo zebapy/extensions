@@ -1,8 +1,48 @@
 import { List } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
-import { type Transaction, useLunchMoney } from "./api";
+import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
+import { formatAmount } from "./mockData";
+
+function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
+  return transactions
+    .map((t) => {
+      const category = categories.find((c) => c.id === t.category_id);
+      const isIncome = category?.is_income ?? false;
+      const amount = parseFloat(formatAmount(t.amount, isIncome));
+      const formattedAmount = `${isIncome ? "+" : "-"}$${Math.abs(amount).toFixed(2)}`;
+      return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
+    })
+    .join("\n");
+}
+
+function filterTransactions(
+  transactions: Transaction[],
+  searchText: string,
+  categories: Category[],
+  tags: Tag[],
+): Transaction[] {
+  if (!searchText) return transactions;
+
+  const lowerSearch = searchText.toLowerCase();
+  return transactions.filter((t) => {
+    const category = categories.find((c) => c.id === t.category_id);
+    const isIncome = category?.is_income ?? false;
+    const transactionTags = (t.tag_ids || [])
+      .map((tagId) => tags.find((tag) => tag.id === tagId))
+      .filter((tag): tag is Tag => tag !== undefined);
+
+    return (
+      t.payee?.toLowerCase().includes(lowerSearch) ||
+      t.notes?.toLowerCase().includes(lowerSearch) ||
+      t.status?.toLowerCase().includes(lowerSearch) ||
+      category?.name?.toLowerCase().includes(lowerSearch) ||
+      (isIncome ? "income" : "expense").includes(lowerSearch) ||
+      transactionTags.some((tag) => tag.name.toLowerCase().includes(lowerSearch))
+    );
+  });
+}
 
 function buildLunchMoneyUrl({
   transaction,
@@ -31,6 +71,7 @@ function buildLunchMoneyUrl({
 export default function Command() {
   const client = useLunchMoney();
   const [selectedMonth, setSelectedMonth] = useState<string>("thisMonth");
+  const [searchText, setSearchText] = useState<string>("");
   const { start, end } = useMemo(() => getDateRangeForFilter(selectedMonth), [selectedMonth]);
 
   const { isLoading, data, revalidate } = useCachedPromise(
@@ -82,8 +123,14 @@ export default function Command() {
   const categories = categoriesData ?? [];
   const tags = tagsData ?? [];
 
-  const pendingTransactions = transactions.filter((t: Transaction) => t.is_pending);
-  const nonPendingTransactions = transactions.filter((t: Transaction) => !t.is_pending);
+  // Filter transactions based on search text
+  const filteredTransactions = useMemo(
+    () => filterTransactions(transactions, searchText, categories, tags),
+    [transactions, searchText, categories, tags],
+  );
+
+  const pendingTransactions = filteredTransactions.filter((t: Transaction) => t.is_pending);
+  const nonPendingTransactions = filteredTransactions.filter((t: Transaction) => !t.is_pending);
 
   // Group non-pending transactions by date
   const transactionsByDate = nonPendingTransactions.reduce(
@@ -117,11 +164,18 @@ export default function Command() {
 
   const { year, month } = getYearMonth();
 
+  const allTransactionsText = useMemo(
+    () => formatTransactionsAsText(filteredTransactions, categories),
+    [filteredTransactions, categories],
+  );
+
   return (
     <List
       isLoading={isLoading}
       searchBarPlaceholder="Search transactions..."
       searchBarAccessory={<DateRangeDropdown value={selectedMonth} onChange={setSelectedMonth} />}
+      filtering={false}
+      onSearchTextChange={setSearchText}
     >
       {pendingTransactions.length > 0 && (
         <List.Section
@@ -139,6 +193,7 @@ export default function Command() {
                 tags={tags}
                 onRevalidate={revalidate}
                 lunchMoneyUrl={lunchMoneyUrl}
+                copyAllText={allTransactionsText}
               />
             );
           })}
@@ -170,6 +225,7 @@ export default function Command() {
                   tags={tags}
                   onRevalidate={revalidate}
                   lunchMoneyUrl={lunchMoneyUrl}
+                  copyAllText={allTransactionsText}
                 />
               );
             })}

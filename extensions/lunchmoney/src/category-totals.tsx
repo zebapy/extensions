@@ -5,6 +5,18 @@ import { type Transaction, type Category, type Tag, useLunchMoney } from "./api"
 import { formatAmount } from "./mockData";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
 
+function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
+  return transactions
+    .map((t) => {
+      const category = categories.find((c) => c.id === t.category_id);
+      const isIncome = category?.is_income ?? false;
+      const amount = parseFloat(formatAmount(t.amount, isIncome));
+      const formattedAmount = `${isIncome ? "+" : "-"}$${Math.abs(amount).toFixed(2)}`;
+      return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
+    })
+    .join("\n");
+}
+
 interface CategoryTotal {
   name: string;
   total: number;
@@ -84,6 +96,11 @@ function CategoryTransactionsList({
     currency: "USD",
   }).format(category.total);
 
+  const allTransactionsText = useMemo(
+    () => formatTransactionsAsText(category.transactions, categories),
+    [category.transactions, categories],
+  );
+
   return (
     <List navigationTitle={`${category.name} - ${formattedTotal}`} searchBarPlaceholder="Search transactions...">
       {category.transactions.map((transaction) => (
@@ -94,6 +111,7 @@ function CategoryTransactionsList({
           tags={tags}
           onRevalidate={onRevalidate}
           lunchMoneyUrl={`https://my.lunchmoney.app/transactions/${transaction.id}`}
+          copyAllText={allTransactionsText}
         />
       ))}
     </List>
