@@ -1,5 +1,5 @@
-import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
-import { useState } from "react";
+import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color, useNavigation } from "@raycast/api";
+import { useForm, FormValidation } from "@raycast/utils";
 import { formatCurrency, formatSignedCurrency } from "./format";
 import type { Transaction, Category, Tag } from "./api";
 import { useLunchMoney } from "./api";
@@ -182,27 +182,6 @@ export function TransactionListItem({
     }
   }
 
-  async function handleUpdateTransaction(categoryId: string, tagNames: string[]) {
-    const tagIds = tagNames
-      .map((name) => tags.find((t: Tag) => t.name === name)?.id)
-      .filter((id): id is number => id !== undefined);
-
-    const { error } = await client.PUT("/transactions/{id}", {
-      params: { path: { id: transaction.id } },
-      body: {
-        category_id: parseInt(categoryId),
-        tags: tagIds,
-      },
-    });
-    if (error) {
-      console.error("Update transaction error:", error);
-      throw new Error(JSON.stringify(error));
-    }
-    if (onRevalidate) {
-      onRevalidate();
-    }
-  }
-
   // Get category to check if it's income
   const category = categories.find((c) => c.id === transaction.category_id);
   const isIncome = category?.is_income ?? false;
@@ -285,7 +264,7 @@ export function TransactionListItem({
                 categories={categories}
                 tags={tags}
                 lunchMoneyUrl={lunchMoneyUrl}
-                onUpdateTransaction={handleUpdateTransaction}
+                onRevalidate={onRevalidate}
               />
             }
           />
@@ -304,7 +283,7 @@ export function TransactionListItem({
                 transaction={transaction}
                 categories={categories}
                 tags={tags}
-                onSubmit={handleUpdateTransaction}
+                onRevalidate={onRevalidate}
               />
             }
           />
@@ -327,48 +306,78 @@ export function TransactionListItem({
   );
 }
 
+interface EditTransactionFormValues {
+  category: string;
+  tags: string[];
+}
+
 export function EditTransactionForm({
   transaction,
   categories,
   tags,
-  onSubmit,
+  onRevalidate,
 }: {
   transaction: Transaction;
   categories: Category[];
   tags: Tag[];
-  onSubmit: (categoryId: string, tagIds: string[]) => Promise<void>;
+  onRevalidate?: () => void;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleSubmit(values: { category: string; tags: string[] }) {
-    setIsLoading(true);
-    try {
-      await onSubmit(values.category, values.tags);
-      await showToast({
-        style: Toast.Style.Success,
-        title: "Transaction updated",
-      });
-    } catch (error) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to update transaction",
-        message: String(error),
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const { pop } = useNavigation();
+  const client = useLunchMoney();
 
   const currentCategory = categories.find((c) => c.id === transaction.category_id);
-
-  // Get tag names from tag_ids
   const transactionTags = transaction.tag_ids
     .map((tagId) => tags.find((t) => t.id === tagId))
     .filter((t): t is Tag => t !== undefined);
 
+  const { handleSubmit, itemProps } = useForm<EditTransactionFormValues>({
+    onSubmit: async (formValues) => {
+      try {
+        const tagIds = formValues.tags
+          .map((name) => tags.find((t: Tag) => t.name === name)?.id)
+          .filter((id): id is number => id !== undefined);
+
+        const { error } = await client.PUT("/transactions/{id}", {
+          params: { path: { id: transaction.id } },
+          body: {
+            category_id: parseInt(formValues.category),
+            tag_ids: tagIds,
+          },
+        });
+
+        if (error) {
+          console.error("Update transaction error:", error);
+          throw new Error(JSON.stringify(error));
+        }
+
+        await showToast({
+          style: Toast.Style.Success,
+          title: "Transaction updated",
+        });
+
+        if (onRevalidate) {
+          onRevalidate();
+        }
+        pop();
+      } catch (error) {
+        await showToast({
+          style: Toast.Style.Failure,
+          title: "Failed to update transaction",
+          message: String(error),
+        });
+      }
+    },
+    initialValues: {
+      category: currentCategory?.id.toString() ?? "",
+      tags: transactionTags.map((t) => t.name),
+    },
+    validation: {
+      category: FormValidation.Required,
+    },
+  });
+
   return (
     <Form
-      isLoading={isLoading}
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Save Changes" onSubmit={handleSubmit} />
@@ -376,12 +385,12 @@ export function EditTransactionForm({
       }
     >
       <Form.Description text={`Editing: ${transaction.payee}`} />
-      <Form.Dropdown id="category" title="Category" defaultValue={currentCategory?.id.toString()}>
+      <Form.Dropdown title="Category" {...itemProps.category}>
         {categories.map((category) => (
           <Form.Dropdown.Item key={category.id} value={category.id.toString()} title={category.name} />
         ))}
       </Form.Dropdown>
-      <Form.TagPicker id="tags" title="Tags" defaultValue={transactionTags.map((t) => t.name)}>
+      <Form.TagPicker title="Tags" {...itemProps.tags}>
         {tags.map((tag) => (
           <Form.TagPicker.Item key={tag.id} value={tag.name} title={tag.name} />
         ))}
@@ -394,13 +403,13 @@ export function TransactionDetail({
   transaction,
   categories = [],
   tags = [],
-  onUpdateTransaction,
+  onRevalidate,
   lunchMoneyUrl,
 }: {
   transaction: Transaction;
   categories?: Category[];
   tags?: Tag[];
-  onUpdateTransaction?: (categoryId: string, tagIds: string[]) => Promise<void>;
+  onRevalidate?: () => void;
   lunchMoneyUrl?: string;
 }) {
   const originalAmount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
@@ -475,21 +484,19 @@ export function TransactionDetail({
       }
       actions={
         <ActionPanel>
-          {onUpdateTransaction && (
-            <Action.Push
-              title="Edit Transaction"
-              icon={Icon.Pencil}
-              shortcut={{ modifiers: ["cmd"], key: "e" }}
-              target={
-                <EditTransactionForm
-                  transaction={transaction}
-                  categories={categories}
-                  tags={tags}
-                  onSubmit={onUpdateTransaction}
-                />
-              }
-            />
-          )}
+          <Action.Push
+            title="Edit Transaction"
+            icon={Icon.Pencil}
+            shortcut={{ modifiers: ["cmd"], key: "e" }}
+            target={
+              <EditTransactionForm
+                transaction={transaction}
+                categories={categories}
+                tags={tags}
+                onRevalidate={onRevalidate}
+              />
+            }
+          />
           {lunchMoneyUrl && (
             <Action.OpenInBrowser
               title="Open in Lunch Money"
