@@ -1,6 +1,6 @@
 # LunchMoney Changelog
 
-## [Major Overhaul] - 2025-11-28
+## [Major Overhaul] - {PR_MERGE_DATE}
 
 ### New Features
 
