@@ -1,6 +1,5 @@
 import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
 import { useState } from "react";
-import { sift } from "radash";
 import { formatAmount } from "./mockData";
 import type { Transaction, Category, Tag } from "./api";
 import { useLunchMoney } from "./api";
@@ -60,8 +59,8 @@ export function getDateRangeForFilter(filter: string): {
   end: string;
 } {
   const now = new Date();
-  const end = now.toISOString().split("T")[0];
   let start: Date;
+  const end: Date = now;
 
   switch (filter) {
     case "7days":
@@ -108,7 +107,7 @@ export function getDateRangeForFilter(filter: string): {
 
   return {
     start: start.toISOString().split("T")[0],
-    end,
+    end: end.toISOString().split("T")[0],
   };
 }
 
@@ -214,18 +213,9 @@ export function TransactionListItem({
   const isPending = transaction.is_pending ?? false;
 
   // Get tag objects from tag_ids
-  const transactionTags = transaction.tag_ids
+  const transactionTags = (transaction.tag_ids || [])
     .map((tagId) => tags.find((t) => t.id === tagId))
     .filter((t): t is Tag => t !== undefined);
-
-  // Build keywords array for search
-  const keywords = sift([
-    transaction.status,
-    transaction.payee,
-    transaction.notes,
-    category?.name,
-    ...transactionTags.map((t) => t.name),
-  ]);
 
   // Determine icon based on status
   let statusIcon: { source: Icon; tintColor: Color };
@@ -245,7 +235,6 @@ export function TransactionListItem({
       icon={statusIcon}
       title={formattedAmount}
       subtitle={transaction.payee || "Unknown"}
-      keywords={keywords}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
