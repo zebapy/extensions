@@ -2,19 +2,9 @@ import { ActionPanel, Action, Icon, List, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
-import { formatSignedCurrency, getAmountValue, formatCurrency } from "./format";
+import { getAmountValue, formatCurrency, buildLunchMoneyUrl } from "./format";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
-
-function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
-  return transactions
-    .map((t) => {
-      const category = categories.find((c) => c.id === t.category_id);
-      const isIncome = category?.is_income ?? false;
-      const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
-      return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
-    })
-    .join("\n");
-}
+import { formatTransactionsAsText } from "./list";
 
 interface CategoryTotal {
   name: string;
@@ -84,11 +74,15 @@ function CategoryTransactionsList({
   categories,
   tags,
   onRevalidate,
+  start,
+  end,
 }: {
   category: CategoryTotal;
   categories: Category[];
   tags: Tag[];
   onRevalidate?: () => void;
+  start: string;
+  end: string;
 }) {
   const formattedTotal = formatCurrency(category.total, "USD");
 
@@ -99,17 +93,20 @@ function CategoryTransactionsList({
 
   return (
     <List navigationTitle={`${category.name} - ${formattedTotal}`} searchBarPlaceholder="Search transactions...">
-      {category.transactions.map((transaction) => (
-        <TransactionListItem
-          key={transaction.id}
-          transaction={transaction}
-          categories={categories}
-          tags={tags}
-          onRevalidate={onRevalidate}
-          lunchMoneyUrl={`https://my.lunchmoney.app/transactions/${transaction.id}`}
-          copyAllText={allTransactionsText}
-        />
-      ))}
+      {category.transactions.map((transaction) => {
+        const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, start, end });
+        return (
+          <TransactionListItem
+            key={transaction.id}
+            transaction={transaction}
+            categories={categories}
+            tags={tags}
+            onRevalidate={onRevalidate}
+            lunchMoneyUrl={lunchMoneyUrl}
+            copyAllText={allTransactionsText}
+          />
+        );
+      })}
     </List>
   );
 }
@@ -212,6 +209,8 @@ export default function Command() {
                           categories={categories}
                           tags={tags}
                           onRevalidate={revalidate}
+                          start={start}
+                          end={end}
                         />
                       }
                     />
@@ -257,6 +256,8 @@ export default function Command() {
                           categories={categories}
                           tags={tags}
                           onRevalidate={revalidate}
+                          start={start}
+                          end={end}
                         />
                       }
                     />

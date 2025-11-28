@@ -1,7 +1,7 @@
 // Mock mode flag for randomizing amounts in screenshots
 // Set to true when taking screenshots to randomize amounts under $200
 
-export const isMockMode = true; // Set to false for real data
+export const isMockMode = false; // Set to false for real data
 
 const mockValues = [
   12.34, 23.45, 34.56, 45.67, 56.78, 67.89, 78.9, 89.01, 98.76, 87.65, 76.54, 65.43, 54.32, 43.21, 123.45, 111.11,
@@ -60,4 +60,31 @@ export function formatSignedCurrency(
   }
   // Determine sign from value
   return value < 0 ? `+${formatted}` : `-${formatted}`;
+}
+
+/**
+ * Builds a LunchMoney URL for a transaction with date range filters
+ */
+export function buildLunchMoneyUrl({
+  transaction,
+  start,
+  end,
+}: {
+  transaction: { date: string; category_id?: number | null };
+  start: string;
+  end: string;
+}): string {
+  const transactionDate = new Date(transaction.date);
+  const year = transactionDate.getFullYear().toString();
+  const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
+
+  const url = new URL(`https://my.lunchmoney.app/transactions/${year}/${month}`);
+  if (transaction.category_id) {
+    url.searchParams.set("category", transaction.category_id.toString());
+  }
+  url.searchParams.set("end_date", end);
+  url.searchParams.set("match", "all");
+  url.searchParams.set("start_date", start);
+  url.searchParams.set("time", "custom");
+  return url.toString();
 }

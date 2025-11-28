@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
 import { useState } from "react";
-import { formatCurrency, formatSignedCurrency, getAmountValue } from "./format";
+import { formatCurrency, formatSignedCurrency } from "./format";
 import type { Transaction, Category, Tag } from "./api";
 import { useLunchMoney } from "./api";
 
@@ -141,7 +141,6 @@ export interface TransactionListItemProps {
   onRevalidate?: () => void;
   lunchMoneyUrl?: string;
   copyAllText?: string;
-  showDate?: boolean;
 }
 
 export function TransactionListItem({
@@ -151,7 +150,6 @@ export function TransactionListItem({
   onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
   copyAllText,
-  showDate = false,
 }: TransactionListItemProps) {
   const client = useLunchMoney();
 
@@ -248,28 +246,33 @@ export function TransactionListItem({
     ...(isCurrentYear ? {} : { year: "numeric" }),
   });
 
+  // Keywords for filtering - include payee, category, notes, tags
+  const keywords = [
+    transaction.payee,
+    category?.name,
+    transaction.notes,
+    ...transactionTags.map((tag) => tag.name),
+  ].filter((k): k is string => Boolean(k));
+
   return (
     <List.Item
       key={transaction.id}
       icon={isIncome ? { source: Icon.ArrowUp, tintColor: Color.Green } : statusIcon}
       title={{ value: formattedAmount, tooltip: isIncome ? "Income" : "Expense" }}
       subtitle={truncatedPayee}
+      keywords={keywords}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
-        ...(showDate
-          ? [
-              {
-                text: dateText,
-                tooltip: transactionDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-              },
-            ]
-          : []),
+        {
+          text: dateText,
+          tooltip: transactionDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+        },
       ]}
       actions={
         <ActionPanel>
@@ -313,7 +316,7 @@ export function TransactionListItem({
           <Action.CopyToClipboard content={`${transaction.payee} - ${formattedAmount}`} title="Copy Transaction" />
           {copyAllText && (
             <Action.CopyToClipboard
-              title="Copy All Transactions"
+              title="Copy Shown Transactions"
               content={copyAllText}
               shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
             />

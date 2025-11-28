@@ -3,17 +3,34 @@ import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
-import { formatSignedCurrency } from "./format";
+import { formatSignedCurrency, formatCurrency, buildLunchMoneyUrl } from "./format";
 
-function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
-  return transactions
-    .map((t) => {
-      const category = categories.find((c) => c.id === t.category_id);
-      const isIncome = category?.is_income ?? false;
-      const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
-      return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
-    })
+export function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
+  const data = transactions.map((t) => {
+    const category = categories.find((c) => c.id === t.category_id);
+    const isIncome = category?.is_income ?? false;
+    const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
+
+    return {
+      Date: t.date,
+      Payee: t.payee || "",
+      Amount: formattedAmount,
+      Category: category?.name || "Uncategorized",
+    };
+  });
+
+  if (data.length === 0) return "";
+
+  const headers = Object.keys(data[0]).join(",");
+  const rows = data
+    .map((row) =>
+      Object.values(row)
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(","),
+    )
     .join("\n");
+
+  return `${headers}\n${rows}`;
 }
 
 function filterTransactions(
@@ -41,30 +58,6 @@ function filterTransactions(
       transactionTags.some((tag) => tag.name.toLowerCase().includes(lowerSearch))
     );
   });
-}
-
-function buildLunchMoneyUrl({
-  transaction,
-  year,
-  month,
-  start,
-  end,
-}: {
-  transaction: Transaction;
-  year: string;
-  month: string;
-  start: string;
-  end: string;
-}): string {
-  const url = new URL(`https://my.lunchmoney.app/transactions/${year}/${month}`);
-  if (transaction.category_id) {
-    url.searchParams.set("category", transaction.category_id.toString());
-  }
-  url.searchParams.set("end_date", end);
-  url.searchParams.set("match", "all");
-  url.searchParams.set("start_date", start);
-  url.searchParams.set("time", "custom");
-  return url.toString();
 }
 
 export default function Command() {
@@ -131,26 +124,40 @@ export default function Command() {
   const pendingTransactions = filteredTransactions.filter((t: Transaction) => t.is_pending);
   const nonPendingTransactions = filteredTransactions.filter((t: Transaction) => !t.is_pending);
 
-  // Extract year and month for URL building - handle both month format (YYYY-MM) and quick ranges
-  const getYearMonth = () => {
-    if (selectedMonth.includes("-")) {
-      const [year, month] = selectedMonth.split("-");
-      return { year, month };
-    }
-    // For quick ranges, use the start date from the date range
-    const startDate = new Date(start);
-    return {
-      year: startDate.getFullYear().toString(),
-      month: (startDate.getMonth() + 1).toString().padStart(2, "0"),
-    };
-  };
-
-  const { year, month } = getYearMonth();
-
   const allTransactionsText = useMemo(
     () => formatTransactionsAsText(filteredTransactions, categories),
     [filteredTransactions, categories],
   );
+
+  // Calculate total for filtered transactions
+  const totalAmount = useMemo(() => {
+    return filteredTransactions.reduce((sum, t) => {
+      const category = categories.find((c) => c.id === t.category_id);
+      const isIncome = category?.is_income ?? false;
+      const amount = Math.abs(parseFloat(t.amount));
+      return sum + (isIncome ? amount : -amount);
+    }, 0);
+  }, [filteredTransactions, categories]);
+
+  // Calculate total for pending transactions
+  const pendingTotal = useMemo(() => {
+    return pendingTransactions.reduce((sum, t) => {
+      const category = categories.find((c) => c.id === t.category_id);
+      const isIncome = category?.is_income ?? false;
+      const amount = Math.abs(parseFloat(t.amount));
+      return sum + (isIncome ? amount : -amount);
+    }, 0);
+  }, [pendingTransactions, categories]);
+
+  // Calculate total for non-pending transactions
+  const nonPendingTotal = useMemo(() => {
+    return nonPendingTransactions.reduce((sum, t) => {
+      const category = categories.find((c) => c.id === t.category_id);
+      const isIncome = category?.is_income ?? false;
+      const amount = Math.abs(parseFloat(t.amount));
+      return sum + (isIncome ? amount : -amount);
+    }, 0);
+  }, [nonPendingTransactions, categories]);
 
   return (
     <List
@@ -160,13 +167,17 @@ export default function Command() {
       filtering={false}
       onSearchTextChange={setSearchText}
     >
+      <List.Section
+        title="Summary"
+        subtitle={`${filteredTransactions.length} transaction${filteredTransactions.length === 1 ? "" : "s"} • Total: ${formatCurrency(Math.abs(totalAmount))}${totalAmount > 0 ? " income" : " spent"}`}
+      />
       {pendingTransactions.length > 0 && (
         <List.Section
           title="Pending"
-          subtitle={`${pendingTransactions.length} transaction${pendingTransactions.length === 1 ? "" : "s"}`}
+          subtitle={`${pendingTransactions.length} transaction${pendingTransactions.length === 1 ? "" : "s"} • ${formatCurrency(Math.abs(pendingTotal))}${pendingTotal > 0 ? " income" : " spent"}`}
         >
           {pendingTransactions.map((transaction: Transaction) => {
-            const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
+            const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, start, end });
 
             return (
               <TransactionListItem
@@ -177,28 +188,31 @@ export default function Command() {
                 onRevalidate={revalidate}
                 lunchMoneyUrl={lunchMoneyUrl}
                 copyAllText={allTransactionsText}
-                showDate
               />
             );
           })}
         </List.Section>
       )}
-      {nonPendingTransactions.map((transaction: Transaction) => {
-        const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
+      <List.Section
+        title="Transactions"
+        subtitle={`${nonPendingTransactions.length} transaction${nonPendingTransactions.length === 1 ? "" : "s"} • ${formatCurrency(Math.abs(nonPendingTotal))}${nonPendingTotal > 0 ? " income" : " spent"}`}
+      >
+        {nonPendingTransactions.map((transaction: Transaction) => {
+          const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, start, end });
 
-        return (
-          <TransactionListItem
-            key={transaction.id}
-            transaction={transaction}
-            categories={categories}
-            tags={tags}
-            onRevalidate={revalidate}
-            lunchMoneyUrl={lunchMoneyUrl}
-            copyAllText={allTransactionsText}
-            showDate
-          />
-        );
-      })}
+          return (
+            <TransactionListItem
+              key={transaction.id}
+              transaction={transaction}
+              categories={categories}
+              tags={tags}
+              onRevalidate={revalidate}
+              lunchMoneyUrl={lunchMoneyUrl}
+              copyAllText={allTransactionsText}
+            />
+          );
+        })}
+      </List.Section>
     </List>
   );
 }
