@@ -39,6 +39,13 @@ export function generateMonthOptions() {
   return options;
 }
 
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function getDateRange(monthValue: string) {
   const [year, month] = monthValue.split("-").map(Number);
 
@@ -49,8 +56,8 @@ export function getDateRange(monthValue: string) {
   const end = new Date(year, month, 0);
 
   return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
+    start: formatDateToYYYYMMDD(start),
+    end: formatDateToYYYYMMDD(end),
   };
 }
 
@@ -64,56 +71,47 @@ export function getDateRangeForFilter(filter: string): {
 
   switch (filter) {
     case "7days":
-      start = new Date();
+      end = new Date(now);
+      start = new Date(now);
       start.setDate(start.getDate() - 7);
-      end = now;
       break;
     case "30days":
-      start = new Date();
+      end = new Date(now);
+      start = new Date(now);
       start.setDate(start.getDate() - 30);
-      end = now;
       break;
     case "90days":
-      start = new Date();
+      end = new Date(now);
+      start = new Date(now);
       start.setDate(start.getDate() - 90);
-      end = now;
       break;
     case "thisMonth":
       start = new Date(now.getFullYear(), now.getMonth(), 1);
       end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       break;
-    case "lastMonth": {
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-      return {
-        start: lastMonth.toISOString().split("T")[0],
-        end: lastMonthEnd.toISOString().split("T")[0],
-      };
-    }
+    case "lastMonth":
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      end = new Date(now.getFullYear(), now.getMonth(), 0);
+      break;
     case "thisYear":
       start = new Date(now.getFullYear(), 0, 1);
       end = new Date(now.getFullYear(), 11, 31);
       break;
-    case "lastYear": {
-      const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
-      const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
-      return {
-        start: lastYearStart.toISOString().split("T")[0],
-        end: lastYearEnd.toISOString().split("T")[0],
-      };
-    }
+    case "lastYear":
+      start = new Date(now.getFullYear() - 1, 0, 1);
+      end = new Date(now.getFullYear() - 1, 11, 31);
+      break;
     case "allTime":
-      start = new Date();
-      start.setFullYear(start.getFullYear() - 2);
-      end = now;
+      start = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate());
+      end = new Date(now);
       break;
     default:
       return getDateRange(filter);
   }
 
   return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
+    start: formatDateToYYYYMMDD(start),
+    end: formatDateToYYYYMMDD(end),
   };
 }
 

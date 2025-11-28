@@ -109,7 +109,7 @@ export default function Command() {
   const { isLoading, data, revalidate } = useCachedPromise(
     async (startDate: string, endDate: string) => {
       const { data, error } = await client.GET("/transactions", {
-        params: { query: { start_date: startDate, end_date: endDate } },
+        params: { query: { start_date: startDate, end_date: endDate, limit: 1000 } },
       });
       if (error) {
         console.error("Transactions fetch error:", error);

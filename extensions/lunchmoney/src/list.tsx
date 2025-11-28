@@ -38,7 +38,7 @@ export default function Command() {
   const { isLoading, data, revalidate } = useCachedPromise(
     async (startDate: string, endDate: string) => {
       const { data, error } = await client.GET("/transactions", {
-        params: { query: { start_date: startDate, end_date: endDate } },
+        params: { query: { start_date: startDate, end_date: endDate, limit: 1000 } },
       });
       if (error) {
         console.error("Transactions fetch error:", error);
@@ -114,7 +114,21 @@ export default function Command() {
   // Sort dates in descending order
   const sortedDates = Object.keys(transactionsByDate).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-  const [year, month] = selectedMonth.split("-");
+  // Extract year and month for URL building - handle both month format (YYYY-MM) and quick ranges
+  const getYearMonth = () => {
+    if (selectedMonth.includes("-")) {
+      const [year, month] = selectedMonth.split("-");
+      return { year, month };
+    }
+    // For quick ranges, use the start date from the date range
+    const startDate = new Date(start);
+    return {
+      year: startDate.getFullYear().toString(),
+      month: (startDate.getMonth() + 1).toString().padStart(2, "0"),
+    };
+  };
+
+  const { year, month } = getYearMonth();
 
   return (
     <List
