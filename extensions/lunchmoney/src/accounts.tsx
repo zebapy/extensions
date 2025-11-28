@@ -1,7 +1,7 @@
 import { ActionPanel, Action, Icon, List, Color, showToast, Toast } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { ManualAccount, PlaidAccount, useLunchMoney } from "./api";
-import { formatBalance } from "./mockData";
+import { getAmountValue, formatCurrency } from "./format";
 
 interface Account {
   id: number;
@@ -156,7 +156,7 @@ export default function Command() {
 
   // Calculate net worth (assets minus liabilities)
   const netWorth = activeAccounts.reduce((sum, acc) => {
-    const balance = parseFloat(formatBalance(acc.balance));
+    const balance = getAmountValue(acc.balance);
     const isLiability =
       acc.type_name.toLowerCase().includes("credit") ||
       acc.type_name.toLowerCase().includes("loan") ||
@@ -164,17 +164,11 @@ export default function Command() {
     return sum + (isLiability ? -balance : balance);
   }, 0);
 
-  const formattedNetWorth = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(netWorth);
+  const formattedNetWorth = formatCurrency(netWorth, "USD");
 
   const renderAccount = (account: Account) => {
-    const balance = parseFloat(formatBalance(account.balance));
-    const formattedBalance = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: account.currency.toUpperCase(),
-    }).format(Math.abs(balance));
+    const balance = getAmountValue(account.balance);
+    const formattedBalance = formatCurrency(Math.abs(balance), account.currency);
     const displayName = account.display_name || account.name;
     const institution = account.institution_name || account.type_name;
 
@@ -233,11 +227,8 @@ export default function Command() {
       {closedAccounts.length > 0 && (
         <List.Section title="Closed Accounts">
           {closedAccounts.map((account) => {
-            const balance = parseFloat(account.balance);
-            const formattedBalance = new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: account.currency.toUpperCase(),
-            }).format(Math.abs(balance));
+            const balance = getAmountValue(account.balance);
+            const formattedBalance = formatCurrency(Math.abs(balance), account.currency);
             const displayName = account.display_name || account.name;
 
             return (
