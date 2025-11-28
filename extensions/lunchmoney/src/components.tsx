@@ -233,9 +233,10 @@ export function TransactionListItem({
 
   // Truncate payee for display
   const maxPayeeLength = 30;
-  const truncatedPayee = (transaction.payee || "Unknown").length > maxPayeeLength
-    ? (transaction.payee || "Unknown").slice(0, maxPayeeLength) + "…"
-    : transaction.payee || "Unknown";
+  const truncatedPayee =
+    (transaction.payee || "Unknown").length > maxPayeeLength
+      ? (transaction.payee || "Unknown").slice(0, maxPayeeLength) + "…"
+      : transaction.payee || "Unknown";
 
   // Format date - show year if not current year
   const transactionDate = new Date(transaction.date + "T00:00:00");
