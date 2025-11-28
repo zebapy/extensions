@@ -140,6 +140,7 @@ export interface TransactionListItemProps {
   tags?: Tag[];
   onRevalidate?: () => void;
   lunchMoneyUrl?: string;
+  copyAllText?: string;
 }
 
 export function TransactionListItem({
@@ -148,6 +149,7 @@ export function TransactionListItem({
   tags = [],
   onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
+  copyAllText,
 }: TransactionListItemProps) {
   const client = useLunchMoney();
 
@@ -228,23 +230,12 @@ export function TransactionListItem({
     statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 
-  // Build keywords for filtering
-  const keywords = [
-    transaction.payee,
-    transaction.notes,
-    transaction.status,
-    category?.name,
-    isIncome ? "income" : "expense",
-    ...transactionTags.map((tag) => tag.name),
-  ].filter((k): k is string => Boolean(k));
-
   return (
     <List.Item
       key={transaction.id}
       icon={isIncome ? { source: Icon.ArrowUp, tintColor: Color.Green } : statusIcon}
       title={{ value: formattedAmount, tooltip: isIncome ? "Income" : "Expense" }}
       subtitle={transaction.payee || "Unknown"}
-      keywords={keywords}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
@@ -289,6 +280,13 @@ export function TransactionListItem({
             shortcut={{ modifiers: ["cmd"], key: "o" }}
           />
           <Action.CopyToClipboard content={`${transaction.payee} - ${formattedAmount}`} title="Copy Transaction" />
+          {copyAllText && (
+            <Action.CopyToClipboard
+              title="Copy All Transactions"
+              content={copyAllText}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            />
+          )}
         </ActionPanel>
       }
     />
