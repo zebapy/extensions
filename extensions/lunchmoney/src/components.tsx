@@ -1,6 +1,6 @@
 import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
 import { useState } from "react";
-import { formatAmount } from "./mockData";
+import { formatCurrency, formatSignedCurrency, getAmountValue } from "./format";
 import type { Transaction, Category, Tag } from "./api";
 import { useLunchMoney } from "./api";
 
@@ -207,8 +207,7 @@ export function TransactionListItem({
   const category = categories.find((c) => c.id === transaction.category_id);
   const isIncome = category?.is_income ?? false;
 
-  const displayAmount = parseFloat(formatAmount(transaction.amount, isIncome));
-  const formattedAmount = `$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedAmount = formatCurrency(transaction.amount, transaction.currency, isIncome);
   const isReviewed = transaction.status === "reviewed";
   const isRecurring = transaction.recurring_id !== null;
   const isPending = transaction.is_pending ?? false;
@@ -376,8 +375,7 @@ export function TransactionDetail({
   const category = categories.find((c) => c.id === transaction.category_id);
   const isIncome = category?.is_income ?? false;
 
-  const displayAmount = parseFloat(formatAmount(transaction.amount, isIncome));
-  const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedAmount = formatSignedCurrency(transaction.amount, transaction.currency, { isIncome, isExpense });
   const isReviewed = transaction.status === "reviewed";
 
   // Get tag objects from tag_ids

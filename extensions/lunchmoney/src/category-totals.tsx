@@ -2,7 +2,7 @@ import { ActionPanel, Action, Icon, List, Color } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
-import { formatAmount } from "./mockData";
+import { formatSignedCurrency, getAmountValue, formatCurrency } from "./format";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
 
 function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
@@ -10,8 +10,7 @@ function formatTransactionsAsText(transactions: Transaction[], categories: Categ
     .map((t) => {
       const category = categories.find((c) => c.id === t.category_id);
       const isIncome = category?.is_income ?? false;
-      const amount = parseFloat(formatAmount(t.amount, isIncome));
-      const formattedAmount = `${isIncome ? "+" : "-"}$${Math.abs(amount).toFixed(2)}`;
+      const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
       return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
     })
     .join("\n");
@@ -44,7 +43,7 @@ function calculateCategoryTotals(transactions: Transaction[], categories: Catego
     const category = categories.find((c) => c.id === transaction.category_id);
     const isIncome = category?.is_income ?? false;
 
-    const amount = parseFloat(formatAmount(transaction.amount, isIncome));
+    const amount = getAmountValue(transaction.amount, isIncome);
     const categoryName = category?.name || "Uncategorized";
 
     // Only count non-income towards grand total
@@ -91,10 +90,7 @@ function CategoryTransactionsList({
   tags: Tag[];
   onRevalidate?: () => void;
 }) {
-  const formattedTotal = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(category.total);
+  const formattedTotal = formatCurrency(category.total, "USD");
 
   const allTransactionsText = useMemo(
     () => formatTransactionsAsText(category.transactions, categories),
@@ -177,15 +173,8 @@ export default function Command() {
   const totalIncome = incomeTotals.reduce((sum, cat) => sum + cat.total, 0);
   const totalExpenses = expenseTotals.reduce((sum, cat) => sum + cat.total, 0);
 
-  const formattedTotalIncome = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(totalIncome);
-
-  const formattedTotalExpenses = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(totalExpenses);
+  const formattedTotalIncome = formatCurrency(totalIncome, "USD");
+  const formattedTotalExpenses = formatCurrency(totalExpenses, "USD");
 
   return (
     <List
@@ -196,10 +185,7 @@ export default function Command() {
       {incomeTotals.length > 0 && (
         <List.Section title={`Income: ${formattedTotalIncome}`}>
           {incomeTotals.map((category) => {
-            const formattedTotal = new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(category.total);
+            const formattedTotal = formatCurrency(category.total, "USD");
 
             return (
               <List.Item
@@ -244,10 +230,7 @@ export default function Command() {
       {expenseTotals.length > 0 && (
         <List.Section title={`Expenses: ${formattedTotalExpenses}`}>
           {expenseTotals.map((category) => {
-            const formattedTotal = new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-            }).format(category.total);
+            const formattedTotal = formatCurrency(category.total, "USD");
 
             return (
               <List.Item

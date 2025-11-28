@@ -3,15 +3,14 @@ import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
-import { formatAmount } from "./mockData";
+import { formatSignedCurrency } from "./format";
 
 function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
   return transactions
     .map((t) => {
       const category = categories.find((c) => c.id === t.category_id);
       const isIncome = category?.is_income ?? false;
-      const amount = parseFloat(formatAmount(t.amount, isIncome));
-      const formattedAmount = `${isIncome ? "+" : "-"}$${Math.abs(amount).toFixed(2)}`;
+      const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
       return `${t.date}\t${t.payee}\t${formattedAmount}\t${category?.name || "Uncategorized"}`;
     })
     .join("\n");
