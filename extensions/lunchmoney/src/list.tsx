@@ -12,6 +12,30 @@ import {
   DateRangeDropdown,
 } from "./components";
 
+function buildLunchMoneyUrl({
+  transaction,
+  year,
+  month,
+  start,
+  end,
+}: {
+  transaction: Transaction;
+  year: string;
+  month: string;
+  start: string;
+  end: string;
+}): string {
+  const url = new URL(`https://my.lunchmoney.app/transactions/${year}/${month}`);
+  if (transaction.category_id) {
+    url.searchParams.set("category", transaction.category_id.toString());
+  }
+  url.searchParams.set("end_date", end);
+  url.searchParams.set("match", "all");
+  url.searchParams.set("start_date", start);
+  url.searchParams.set("time", "custom");
+  return url.toString();
+}
+
 export default function Command() {
   const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
@@ -143,8 +167,7 @@ export default function Command() {
   if (selectedTransaction) {
     const { start, end } = getDateRange(selectedMonth);
     const [year, month] = selectedMonth.split("-");
-    const category = selectedTransaction.category_id || "";
-    const lunchMoneyUrl = `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
+    const lunchMoneyUrl = buildLunchMoneyUrl({ transaction: selectedTransaction, year, month, start, end });
 
     return (
       <TransactionDetail
@@ -169,23 +192,90 @@ export default function Command() {
       searchBarAccessory={<DateRangeDropdown value={selectedMonth} onChange={setSelectedMonth} />}
       throttle
     >
-      {filteredTransactions.map((transaction: Transaction) => {
-        const [year, month] = selectedMonth.split("-");
-        const category = transaction.category_id || "";
-        const lunchMoneyUrl = `https://my.lunchmoney.app/transactions/${year}/${month}?${category ? `category=${category}&` : ""}end_date=${end}&match=all&start_date=${start}&time=custom`;
+      {(() => {
+        const pendingTransactions = filteredTransactions.filter((t: Transaction) => t.is_pending);
+        const nonPendingTransactions = filteredTransactions.filter((t: Transaction) => !t.is_pending);
+
+        // Group non-pending transactions by date
+        const transactionsByDate = nonPendingTransactions.reduce(
+          (acc, transaction) => {
+            const date = transaction.date;
+            if (!acc[date]) {
+              acc[date] = [];
+            }
+            acc[date].push(transaction);
+            return acc;
+          },
+          {} as Record<string, Transaction[]>,
+        );
+
+        // Sort dates in descending order
+        const sortedDates = Object.keys(transactionsByDate).sort(
+          (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+        );
 
         return (
-          <TransactionListItem
-            key={transaction.id}
-            transaction={transaction}
-            categories={categories}
-            tags={tags}
-            onToggleReviewStatus={handleToggleReviewStatus}
-            onEdit={setEditingTransaction}
-            lunchMoneyUrl={lunchMoneyUrl}
-          />
+          <>
+            {pendingTransactions.length > 0 && (
+              <List.Section
+                title="Pending"
+                subtitle={`${pendingTransactions.length} transaction${pendingTransactions.length === 1 ? "" : "s"}`}
+              >
+                {pendingTransactions.map((transaction: Transaction) => {
+                  const [year, month] = selectedMonth.split("-");
+                  const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
+
+                  return (
+                    <TransactionListItem
+                      key={transaction.id}
+                      transaction={transaction}
+                      categories={categories}
+                      tags={tags}
+                      onToggleReviewStatus={handleToggleReviewStatus}
+                      onEdit={setEditingTransaction}
+                      lunchMoneyUrl={lunchMoneyUrl}
+                    />
+                  );
+                })}
+              </List.Section>
+            )}
+            {sortedDates.map((date) => {
+              const dateTransactions = transactionsByDate[date];
+              const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+
+              return (
+                <List.Section
+                  key={date}
+                  title={formattedDate}
+                  subtitle={`${dateTransactions.length} transaction${dateTransactions.length === 1 ? "" : "s"}`}
+                >
+                  {dateTransactions.map((transaction: Transaction) => {
+                    const [year, month] = selectedMonth.split("-");
+                    const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
+
+                    return (
+                      <TransactionListItem
+                        key={transaction.id}
+                        transaction={transaction}
+                        categories={categories}
+                        tags={tags}
+                        onToggleReviewStatus={handleToggleReviewStatus}
+                        onEdit={setEditingTransaction}
+                        lunchMoneyUrl={lunchMoneyUrl}
+                      />
+                    );
+                  })}
+                </List.Section>
+              );
+            })}
+          </>
         );
-      })}
+      })()}
     </List>
   );
 }
