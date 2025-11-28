@@ -11,7 +11,7 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "list",
+      "name": "transactions",
       "title": "List Transactions",
       "subtitle": "Lunch Money",
       "description": "Search and list your LunchMoney transactions with flexible date ranges",

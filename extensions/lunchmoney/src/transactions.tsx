@@ -3,35 +3,7 @@ import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
 import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
-import { formatSignedCurrency, formatCurrency, buildLunchMoneyUrl } from "./format";
-
-export function formatTransactionsAsText(transactions: Transaction[], categories: Category[]): string {
-  const data = transactions.map((t) => {
-    const category = categories.find((c) => c.id === t.category_id);
-    const isIncome = category?.is_income ?? false;
-    const formattedAmount = formatSignedCurrency(t.amount, t.currency, { isIncome, isExpense: !isIncome });
-
-    return {
-      Date: t.date,
-      Payee: t.payee || "",
-      Amount: formattedAmount,
-      Category: category?.name || "Uncategorized",
-    };
-  });
-
-  if (data.length === 0) return "";
-
-  const headers = Object.keys(data[0]).join(",");
-  const rows = data
-    .map((row) =>
-      Object.values(row)
-        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-        .join(","),
-    )
-    .join("\n");
-
-  return `${headers}\n${rows}`;
-}
+import { formatCurrency, buildLunchMoneyUrl, formatTransactionsAsText } from "./format";
 
 function filterTransactions(
   transactions: Transaction[],
