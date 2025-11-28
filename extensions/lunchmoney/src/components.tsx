@@ -142,7 +142,6 @@ export interface TransactionListItemProps {
   onToggleReviewStatus?: (transaction: Transaction) => void;
   onRevalidate?: () => void;
   lunchMoneyUrl?: string;
-  customDetailTarget?: React.ReactNode;
 }
 
 export function TransactionListItem({
@@ -152,7 +151,6 @@ export function TransactionListItem({
   onToggleReviewStatus,
   onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
-  customDetailTarget,
 }: TransactionListItemProps) {
   const client = useLunchMoney();
 
@@ -220,15 +218,13 @@ export function TransactionListItem({
             title="View Details"
             icon={Icon.Eye}
             target={
-              customDetailTarget || (
-                <TransactionDetail
-                  transaction={transaction}
-                  categories={categories}
-                  tags={tags}
-                  lunchMoneyUrl={lunchMoneyUrl}
-                  onUpdateTransaction={handleUpdateTransaction}
-                />
-              )
+              <TransactionDetail
+                transaction={transaction}
+                categories={categories}
+                tags={tags}
+                lunchMoneyUrl={lunchMoneyUrl}
+                onUpdateTransaction={handleUpdateTransaction}
+              />
             }
           />
           {onToggleReviewStatus && (
