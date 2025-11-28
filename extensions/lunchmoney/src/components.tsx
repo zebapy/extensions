@@ -141,6 +141,7 @@ export interface TransactionListItemProps {
   onRevalidate?: () => void;
   lunchMoneyUrl?: string;
   copyAllText?: string;
+  showDate?: boolean;
 }
 
 export function TransactionListItem({
@@ -150,6 +151,7 @@ export function TransactionListItem({
   onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
   copyAllText,
+  showDate = false,
 }: TransactionListItemProps) {
   const client = useLunchMoney();
 
@@ -229,15 +231,44 @@ export function TransactionListItem({
     statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 
+  // Truncate payee for display
+  const maxPayeeLength = 30;
+  const truncatedPayee = (transaction.payee || "Unknown").length > maxPayeeLength
+    ? (transaction.payee || "Unknown").slice(0, maxPayeeLength) + "…"
+    : transaction.payee || "Unknown";
+
+  // Format date - show year if not current year
+  const transactionDate = new Date(transaction.date + "T00:00:00");
+  const currentYear = new Date().getFullYear();
+  const isCurrentYear = transactionDate.getFullYear() === currentYear;
+  const dateText = transactionDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(isCurrentYear ? {} : { year: "numeric" }),
+  });
+
   return (
     <List.Item
       key={transaction.id}
       icon={isIncome ? { source: Icon.ArrowUp, tintColor: Color.Green } : statusIcon}
       title={{ value: formattedAmount, tooltip: isIncome ? "Income" : "Expense" }}
-      subtitle={transaction.payee || "Unknown"}
+      subtitle={truncatedPayee}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
+        ...(showDate
+          ? [
+              {
+                text: dateText,
+                tooltip: transactionDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+              },
+            ]
+          : []),
       ]}
       actions={
         <ActionPanel>

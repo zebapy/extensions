@@ -131,22 +131,6 @@ export default function Command() {
   const pendingTransactions = filteredTransactions.filter((t: Transaction) => t.is_pending);
   const nonPendingTransactions = filteredTransactions.filter((t: Transaction) => !t.is_pending);
 
-  // Group non-pending transactions by date
-  const transactionsByDate = nonPendingTransactions.reduce(
-    (acc, transaction) => {
-      const date = transaction.date;
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(transaction);
-      return acc;
-    },
-    {} as Record<string, Transaction[]>,
-  );
-
-  // Sort dates in descending order
-  const sortedDates = Object.keys(transactionsByDate).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
   // Extract year and month for URL building - handle both month format (YYYY-MM) and quick ranges
   const getYearMonth = () => {
     if (selectedMonth.includes("-")) {
@@ -193,42 +177,26 @@ export default function Command() {
                 onRevalidate={revalidate}
                 lunchMoneyUrl={lunchMoneyUrl}
                 copyAllText={allTransactionsText}
+                showDate
               />
             );
           })}
         </List.Section>
       )}
-      {sortedDates.map((date) => {
-        const dateTransactions = transactionsByDate[date];
-        const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+      {nonPendingTransactions.map((transaction: Transaction) => {
+        const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
 
         return (
-          <List.Section
-            key={date}
-            title={formattedDate}
-            subtitle={`${dateTransactions.length} transaction${dateTransactions.length === 1 ? "" : "s"}`}
-          >
-            {dateTransactions.map((transaction: Transaction) => {
-              const lunchMoneyUrl = buildLunchMoneyUrl({ transaction, year, month, start, end });
-
-              return (
-                <TransactionListItem
-                  key={transaction.id}
-                  transaction={transaction}
-                  categories={categories}
-                  tags={tags}
-                  onRevalidate={revalidate}
-                  lunchMoneyUrl={lunchMoneyUrl}
-                  copyAllText={allTransactionsText}
-                />
-              );
-            })}
-          </List.Section>
+          <TransactionListItem
+            key={transaction.id}
+            transaction={transaction}
+            categories={categories}
+            tags={tags}
+            onRevalidate={revalidate}
+            lunchMoneyUrl={lunchMoneyUrl}
+            copyAllText={allTransactionsText}
+            showDate
+          />
         );
       })}
     </List>
