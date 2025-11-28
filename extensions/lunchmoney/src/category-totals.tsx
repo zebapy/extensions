@@ -3,7 +3,7 @@ import { useCachedPromise } from "@raycast/utils";
 import { useState, useMemo } from "react";
 import { type Transaction, type Category, type Tag, useLunchMoney } from "./api";
 import { formatAmount } from "./mockData";
-import { TransactionListItem, generateMonthOptions, getDateRangeForFilter, DateRangeDropdown } from "./components";
+import { TransactionListItem, getDateRangeForFilter, DateRangeDropdown } from "./components";
 
 interface CategoryTotal {
   name: string;
@@ -102,20 +102,29 @@ function CategoryTransactionsList({
 
 export default function Command() {
   const client = useLunchMoney();
-  const monthOptions = generateMonthOptions();
-  const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
+  const [selectedMonth, setSelectedMonth] = useState<string>("thisMonth");
   const { start, end } = useMemo(() => getDateRangeForFilter(selectedMonth), [selectedMonth]);
 
   const { isLoading, data, revalidate } = useCachedPromise(
     async (startDate: string, endDate: string) => {
-      const { data, error } = await client.GET("/transactions", {
-        params: { query: { start_date: startDate, end_date: endDate, limit: 1000 } },
-      });
-      if (error) {
-        console.error("Transactions fetch error:", error);
-        throw new Error(JSON.stringify(error));
+      const allTransactions: Transaction[] = [];
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await client.GET("/transactions", {
+          params: { query: { start_date: startDate, end_date: endDate, offset } },
+        });
+        if (error) {
+          console.error("Transactions fetch error:", error);
+          throw new Error(JSON.stringify(error));
+        }
+        allTransactions.push(...(data?.transactions || []));
+        hasMore = data?.has_more ?? false;
+        offset += data?.transactions?.length ?? 0;
       }
-      return data?.transactions || [];
+
+      return allTransactions;
     },
     [start, end],
   );
