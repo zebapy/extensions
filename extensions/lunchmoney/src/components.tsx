@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List } from "@raycast/api";
+import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
 import { useState } from "react";
 import { formatAmount } from "./mockData";
 import type { Transaction, Category, Tag } from "./api";
@@ -153,31 +153,32 @@ export function TransactionListItem({
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
   customDetailTarget,
 }: TransactionListItemProps) {
-  const originalAmount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
-  const isExpense = originalAmount > 0;
-
   // Get category to check if it's income
   const category = categories.find((c) => c.id === transaction.category_id);
   const isIncome = category?.is_income ?? false;
 
   const displayAmount = parseFloat(formatAmount(transaction.amount, isIncome));
-  const formattedAmount = `${isExpense ? "-" : "+"}$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedAmount = `$${Math.abs(displayAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const isReviewed = transaction.status === "reviewed";
+  const isRecurring = transaction.recurring_id !== null;
+  const isPending = transaction.is_pending ?? false;
 
   // Get tag objects from tag_ids
   const transactionTags = transaction.tag_ids
     .map((tagId) => tags.find((t) => t.id === tagId))
     .filter((t): t is Tag => t !== undefined);
 
-  const accessories = [
-    ...transactionTags.map((tag) => ({ tag: { value: tag.name } })),
-    { text: formattedAmount },
-    { text: transaction.date },
-    {
-      icon: isReviewed ? Icon.CheckCircle : Icon.Circle,
-      tooltip: isReviewed ? "Reviewed" : "Unreviewed",
-    },
-  ];
+  // Determine icon based on status
+  let statusIcon: { source: Icon; tintColor: Color };
+  if (isPending) {
+    statusIcon = { source: Icon.Clock, tintColor: Color.Orange };
+  } else if (isRecurring) {
+    statusIcon = { source: Icon.Repeat, tintColor: Color.Blue };
+  } else if (isReviewed) {
+    statusIcon = { source: Icon.CheckCircle, tintColor: Color.Green };
+  } else {
+    statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
+  }
 
   const defaultDetailTarget = customDetailTarget || (
     <TransactionDetail transaction={transaction} categories={categories} tags={tags} lunchMoneyUrl={lunchMoneyUrl} />
@@ -186,13 +187,13 @@ export function TransactionListItem({
   return (
     <List.Item
       key={transaction.id}
-      icon={{
-        source: isExpense ? Icon.ArrowDown : Icon.ArrowUp,
-        tintColor: isExpense ? "#DC143C" : "#228B22",
-      }}
-      title={transaction.payee || "Unknown"}
-      subtitle={category?.name || "Uncategorized"}
-      accessories={accessories}
+      icon={statusIcon}
+      title={formattedAmount}
+      subtitle={transaction.payee || "Unknown"}
+      accessories={[
+        ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
+        { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
+      ]}
       actions={
         <ActionPanel>
           <Action.Push title="View Details" icon={Icon.Eye} target={defaultDetailTarget} />
