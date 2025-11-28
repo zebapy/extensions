@@ -1,5 +1,6 @@
 import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color } from "@raycast/api";
 import { useState } from "react";
+import { sift } from "radash";
 import { formatAmount } from "./mockData";
 import type { Transaction, Category, Tag } from "./api";
 import { useLunchMoney } from "./api";
@@ -139,7 +140,6 @@ export interface TransactionListItemProps {
   transaction: Transaction;
   categories?: Category[];
   tags?: Tag[];
-  onToggleReviewStatus?: (transaction: Transaction) => void;
   onRevalidate?: () => void;
   lunchMoneyUrl?: string;
 }
@@ -148,11 +148,39 @@ export function TransactionListItem({
   transaction,
   categories = [],
   tags = [],
-  onToggleReviewStatus,
   onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
 }: TransactionListItemProps) {
   const client = useLunchMoney();
+
+  async function handleToggleReviewStatus() {
+    try {
+      const newStatus = transaction.status === "reviewed" ? "unreviewed" : "reviewed";
+      const { error } = await client.PUT("/transactions/{id}", {
+        params: { path: { id: transaction.id } },
+        body: {
+          status: newStatus,
+        },
+      });
+      if (error) {
+        console.error("Toggle review status error:", error);
+        throw new Error(JSON.stringify(error));
+      }
+      await showToast({
+        style: Toast.Style.Success,
+        title: newStatus === "reviewed" ? "Marked as reviewed" : "Marked as unreviewed",
+      });
+      if (onRevalidate) {
+        onRevalidate();
+      }
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to update review status",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   async function handleUpdateTransaction(categoryId: string, tagNames: string[]) {
     const tagIds = tagNames
@@ -190,6 +218,15 @@ export function TransactionListItem({
     .map((tagId) => tags.find((t) => t.id === tagId))
     .filter((t): t is Tag => t !== undefined);
 
+  // Build keywords array for search
+  const keywords = sift([
+    transaction.status,
+    transaction.payee,
+    transaction.notes,
+    category?.name,
+    ...transactionTags.map((t) => t.name),
+  ]);
+
   // Determine icon based on status
   let statusIcon: { source: Icon; tintColor: Color };
   if (isPending) {
@@ -208,6 +245,7 @@ export function TransactionListItem({
       icon={statusIcon}
       title={formattedAmount}
       subtitle={transaction.payee || "Unknown"}
+      keywords={keywords}
       accessories={[
         ...transactionTags.map((tag) => ({ tag: { value: tag.name }, icon: Icon.Tag })),
         { tag: { value: category?.name || "Uncategorized" }, icon: Icon.Folder },
@@ -227,14 +265,12 @@ export function TransactionListItem({
               />
             }
           />
-          {onToggleReviewStatus && (
-            <Action
-              title={isReviewed ? "Mark as Unreviewed" : "Mark as Reviewed"}
-              icon={isReviewed ? Icon.Circle : Icon.CheckCircle}
-              shortcut={{ modifiers: ["cmd"], key: "r" }}
-              onAction={() => onToggleReviewStatus(transaction)}
-            />
-          )}
+          <Action
+            title={isReviewed ? "Mark as Unreviewed" : "Mark as Reviewed"}
+            icon={isReviewed ? Icon.Circle : Icon.CheckCircle}
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
+            onAction={handleToggleReviewStatus}
+          />
           <Action.Push
             title="Edit Transaction"
             icon={Icon.Pencil}
