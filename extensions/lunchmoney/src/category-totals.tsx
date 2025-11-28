@@ -72,10 +72,12 @@ function CategoryTransactionsList({
   category,
   categories,
   tags,
+  onRevalidate,
 }: {
   category: CategoryTotal;
   categories: Category[];
   tags: Tag[];
+  onRevalidate?: () => void;
 }) {
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -90,6 +92,7 @@ function CategoryTransactionsList({
           transaction={transaction}
           categories={categories}
           tags={tags}
+          onRevalidate={onRevalidate}
           lunchMoneyUrl={`https://my.lunchmoney.app/transactions/${transaction.id}`}
         />
       ))}
@@ -103,7 +106,7 @@ export default function Command() {
   const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
   const { start, end } = useMemo(() => getDateRangeForFilter(selectedMonth), [selectedMonth]);
 
-  const { isLoading, data } = useCachedPromise(
+  const { isLoading, data, revalidate } = useCachedPromise(
     async (startDate: string, endDate: string) => {
       const { data, error } = await client.GET("/transactions", {
         params: { query: { start_date: startDate, end_date: endDate } },
@@ -190,7 +193,14 @@ export default function Command() {
                     <Action.Push
                       title="View Transactions"
                       icon={Icon.List}
-                      target={<CategoryTransactionsList category={category} categories={categories} tags={tags} />}
+                      target={
+                        <CategoryTransactionsList
+                          category={category}
+                          categories={categories}
+                          tags={tags}
+                          onRevalidate={revalidate}
+                        />
+                      }
                     />
                     <Action.CopyToClipboard
                       content={`${category.name}: ${formattedTotal} (${category.percentage.toFixed(1)}%)`}
@@ -231,7 +241,14 @@ export default function Command() {
                     <Action.Push
                       title="View Transactions"
                       icon={Icon.List}
-                      target={<CategoryTransactionsList category={category} categories={categories} tags={tags} />}
+                      target={
+                        <CategoryTransactionsList
+                          category={category}
+                          categories={categories}
+                          tags={tags}
+                          onRevalidate={revalidate}
+                        />
+                      }
                     />
                     <Action.CopyToClipboard
                       content={`${category.name}: ${formattedTotal} (${category.percentage.toFixed(1)}%)`}
