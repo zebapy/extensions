@@ -101,10 +101,6 @@ export function getDateRangeForFilter(filter: string): {
       start = new Date(now.getFullYear() - 1, 0, 1);
       end = new Date(now.getFullYear() - 1, 11, 31);
       break;
-    case "allTime":
-      start = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate());
-      end = new Date(now);
-      break;
     default:
       return getDateRange(filter);
   }
@@ -128,7 +124,6 @@ export function DateRangeDropdown({ value, onChange }: { value: string; onChange
         <List.Dropdown.Item value="lastMonth" title="Last Month" />
         <List.Dropdown.Item value="thisYear" title="This Year" />
         <List.Dropdown.Item value="lastYear" title="Last Year" />
-        <List.Dropdown.Item value="allTime" title="All Time" />
       </List.Dropdown.Section>
       <List.Dropdown.Section title="By Month">
         {monthOptions.map((option) => (
