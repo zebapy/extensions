@@ -101,7 +101,6 @@ export default function Command() {
   const client = useLunchMoney();
   const monthOptions = generateMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState<string>(monthOptions[0].value);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryTotal | null>(null);
   const { start, end } = useMemo(() => getDateRangeForFilter(selectedMonth), [selectedMonth]);
 
   const { isLoading, data } = useCachedPromise(
@@ -158,10 +157,6 @@ export default function Command() {
     currency: "USD",
   }).format(totalExpenses);
 
-  if (selectedCategory) {
-    return <CategoryTransactionsList category={selectedCategory} categories={categories} tags={tags} />;
-  }
-
   return (
     <List
       isLoading={isLoading}
@@ -192,7 +187,11 @@ export default function Command() {
                 ]}
                 actions={
                   <ActionPanel>
-                    <Action title="View Transactions" icon={Icon.List} onAction={() => setSelectedCategory(category)} />
+                    <Action.Push
+                      title="View Transactions"
+                      icon={Icon.List}
+                      target={<CategoryTransactionsList category={category} categories={categories} tags={tags} />}
+                    />
                     <Action.CopyToClipboard
                       content={`${category.name}: ${formattedTotal} (${category.percentage.toFixed(1)}%)`}
                       title="Copy Category Total"
@@ -229,7 +228,11 @@ export default function Command() {
                 ]}
                 actions={
                   <ActionPanel>
-                    <Action title="View Transactions" icon={Icon.List} onAction={() => setSelectedCategory(category)} />
+                    <Action.Push
+                      title="View Transactions"
+                      icon={Icon.List}
+                      target={<CategoryTransactionsList category={category} categories={categories} tags={tags} />}
+                    />
                     <Action.CopyToClipboard
                       content={`${category.name}: ${formattedTotal} (${category.percentage.toFixed(1)}%)`}
                       title="Copy Category Total"

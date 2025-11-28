@@ -2,6 +2,7 @@ import { ActionPanel, Action, Icon, Detail, Form, showToast, Toast, List, Color 
 import { useState } from "react";
 import { formatAmount } from "./mockData";
 import type { Transaction, Category, Tag } from "./api";
+import { useLunchMoney } from "./api";
 
 export function generateMonthOptions() {
   const now = new Date();
@@ -139,7 +140,7 @@ export interface TransactionListItemProps {
   categories?: Category[];
   tags?: Tag[];
   onToggleReviewStatus?: (transaction: Transaction) => void;
-  onEdit?: (transaction: Transaction) => void;
+  onRevalidate?: () => void;
   lunchMoneyUrl?: string;
   customDetailTarget?: React.ReactNode;
 }
@@ -149,10 +150,33 @@ export function TransactionListItem({
   categories = [],
   tags = [],
   onToggleReviewStatus,
-  onEdit,
+  onRevalidate,
   lunchMoneyUrl = "https://my.lunchmoney.app/transactions",
   customDetailTarget,
 }: TransactionListItemProps) {
+  const client = useLunchMoney();
+
+  async function handleUpdateTransaction(categoryId: string, tagNames: string[]) {
+    const tagIds = tagNames
+      .map((name) => tags.find((t: Tag) => t.name === name)?.id)
+      .filter((id): id is number => id !== undefined);
+
+    const { error } = await client.PUT("/transactions/{id}", {
+      params: { path: { id: transaction.id } },
+      body: {
+        category_id: parseInt(categoryId),
+        tags: tagIds,
+      },
+    });
+    if (error) {
+      console.error("Update transaction error:", error);
+      throw new Error(JSON.stringify(error));
+    }
+    if (onRevalidate) {
+      onRevalidate();
+    }
+  }
+
   // Get category to check if it's income
   const category = categories.find((c) => c.id === transaction.category_id);
   const isIncome = category?.is_income ?? false;
@@ -180,10 +204,6 @@ export function TransactionListItem({
     statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 
-  const defaultDetailTarget = customDetailTarget || (
-    <TransactionDetail transaction={transaction} categories={categories} tags={tags} lunchMoneyUrl={lunchMoneyUrl} />
-  );
-
   return (
     <List.Item
       key={transaction.id}
@@ -196,7 +216,21 @@ export function TransactionListItem({
       ]}
       actions={
         <ActionPanel>
-          <Action.Push title="View Details" icon={Icon.Eye} target={defaultDetailTarget} />
+          <Action.Push
+            title="View Details"
+            icon={Icon.Eye}
+            target={
+              customDetailTarget || (
+                <TransactionDetail
+                  transaction={transaction}
+                  categories={categories}
+                  tags={tags}
+                  lunchMoneyUrl={lunchMoneyUrl}
+                  onUpdateTransaction={handleUpdateTransaction}
+                />
+              )
+            }
+          />
           {onToggleReviewStatus && (
             <Action
               title={isReviewed ? "Mark as Unreviewed" : "Mark as Reviewed"}
@@ -205,14 +239,19 @@ export function TransactionListItem({
               onAction={() => onToggleReviewStatus(transaction)}
             />
           )}
-          {onEdit && (
-            <Action
-              title="Edit Transaction"
-              icon={Icon.Pencil}
-              shortcut={{ modifiers: ["cmd"], key: "e" }}
-              onAction={() => onEdit(transaction)}
-            />
-          )}
+          <Action.Push
+            title="Edit Transaction"
+            icon={Icon.Pencil}
+            shortcut={{ modifiers: ["cmd"], key: "e" }}
+            target={
+              <EditTransactionForm
+                transaction={transaction}
+                categories={categories}
+                tags={tags}
+                onSubmit={handleUpdateTransaction}
+              />
+            }
+          />
           <Action.OpenInBrowser
             title="Open in Lunch Money"
             url={lunchMoneyUrl}
@@ -292,15 +331,13 @@ export function TransactionDetail({
   transaction,
   categories = [],
   tags = [],
-  onBack,
-  onEdit,
+  onUpdateTransaction,
   lunchMoneyUrl,
 }: {
   transaction: Transaction;
   categories?: Category[];
   tags?: Tag[];
-  onBack?: () => void;
-  onEdit?: () => void;
+  onUpdateTransaction?: (categoryId: string, tagIds: string[]) => Promise<void>;
   lunchMoneyUrl?: string;
 }) {
   const originalAmount = typeof transaction.amount === "string" ? parseFloat(transaction.amount) : transaction.amount;
@@ -376,13 +413,19 @@ export function TransactionDetail({
       }
       actions={
         <ActionPanel>
-          {onBack && <Action title="Back to List" icon={Icon.ArrowLeft} onAction={onBack} />}
-          {onEdit && (
-            <Action
+          {onUpdateTransaction && (
+            <Action.Push
               title="Edit Transaction"
               icon={Icon.Pencil}
               shortcut={{ modifiers: ["cmd"], key: "e" }}
-              onAction={onEdit}
+              target={
+                <EditTransactionForm
+                  transaction={transaction}
+                  categories={categories}
+                  tags={tags}
+                  onSubmit={onUpdateTransaction}
+                />
+              }
             />
           )}
           {lunchMoneyUrl && (
