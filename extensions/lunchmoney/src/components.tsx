@@ -307,6 +307,8 @@ export function TransactionListItem({
 }
 
 interface EditTransactionFormValues {
+  date: Date | null;
+  notes: string;
   category: string;
   tags: string[];
 }
@@ -330,6 +332,9 @@ export function EditTransactionForm({
     .map((tagId) => tags.find((t) => t.id === tagId))
     .filter((t): t is Tag => t !== undefined);
 
+  // Parse the transaction date (format: YYYY-MM-DD)
+  const transactionDate = new Date(transaction.date + "T00:00:00");
+
   const { handleSubmit, itemProps } = useForm<EditTransactionFormValues>({
     onSubmit: async (formValues) => {
       try {
@@ -337,9 +342,16 @@ export function EditTransactionForm({
           .map((name) => tags.find((t: Tag) => t.name === name)?.id)
           .filter((id): id is number => id !== undefined);
 
+        // Format date as YYYY-MM-DD
+        const formattedDate = formValues.date
+          ? `${formValues.date.getFullYear()}-${String(formValues.date.getMonth() + 1).padStart(2, "0")}-${String(formValues.date.getDate()).padStart(2, "0")}`
+          : transaction.date;
+
         const { error } = await client.PUT("/transactions/{id}", {
           params: { path: { id: transaction.id } },
           body: {
+            date: formattedDate,
+            notes: formValues.notes || null,
             category_id: parseInt(formValues.category),
             tag_ids: tagIds,
           },
@@ -368,11 +380,14 @@ export function EditTransactionForm({
       }
     },
     initialValues: {
+      date: transactionDate,
+      notes: transaction.notes ?? "",
       category: currentCategory?.id.toString() ?? "",
       tags: transactionTags.map((t) => t.name),
     },
     validation: {
       category: FormValidation.Required,
+      date: FormValidation.Required,
     },
   });
 
@@ -385,6 +400,8 @@ export function EditTransactionForm({
       }
     >
       <Form.Description text={`Editing: ${transaction.payee}`} />
+      <Form.DatePicker title="Date" type={Form.DatePicker.Type.Date} {...itemProps.date} />
+      <Form.TextArea title="Notes" placeholder="Add notes or memo..." {...itemProps.notes} />
       <Form.Dropdown title="Category" {...itemProps.category}>
         {categories.map((category) => (
           <Form.Dropdown.Item key={category.id} value={category.id.toString()} title={category.name} />
