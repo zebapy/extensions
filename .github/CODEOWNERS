@@ -2120,6 +2120,7 @@
 /extensions/text-differ                                             @fishfisher
 /extensions/text-format-improver                                    @mrgeneralgoo
 /extensions/text-replacements                                       @thomaslombart
+/extensions/text-rewrap                                             
 /extensions/text-shortcuts                                          @koinzhang @snptrs @gfazioli
 /extensions/textlint-rule-aws-service-name                          @bun913
 /extensions/texts                                                   @zavbala

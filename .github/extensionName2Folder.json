@@ -2118,6 +2118,7 @@
   "ErikFisher/text-differ": "text-differ",
   "alice.ellis/text-format-improver": "text-format-improver",
   "raycast/text-replacements": "text-replacements",
+  "rembridge/text-rewrap": "text-rewrap",
   "koinzhang/text-shortcuts": "text-shortcuts",
   "bun913/raycast-textlint-rule-aws-service-name": "textlint-rule-aws-service-name",
   "zavbala/texts": "texts",
