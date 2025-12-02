@@ -1269,7 +1269,7 @@
 /extensions/mongodb-objectid                                        @tssujt
 /extensions/monitor-mate                                            @MuhaddiMu
 /extensions/monkeytype                                              @radouane-tamouss
-/extensions/monobank                                                @danulqua
+/extensions/monobank                                                @danulqua @0xdhrv
 /extensions/monorepo-manager                                        @tung-dang
 /extensions/monse                                                   @victor-falcon
 /extensions/monzo                                                   @danpalmer
@@ -2120,7 +2120,7 @@
 /extensions/text-differ                                             @fishfisher
 /extensions/text-format-improver                                    @mrgeneralgoo
 /extensions/text-replacements                                       @thomaslombart
-/extensions/text-rewrap                                             
+/extensions/text-rewrap                                             @arembridge
 /extensions/text-shortcuts                                          @koinzhang @snptrs @gfazioli
 /extensions/textlint-rule-aws-service-name                          @bun913
 /extensions/texts                                                   @zavbala
