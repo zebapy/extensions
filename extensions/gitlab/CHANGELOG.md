@@ -1,5 +1,9 @@
 # GitLab Changelog
 
+## [Show Readme] - 2025-12-03
+
+- Add "Show Readme" action to project list
+
 ## [Search projects preferences] - 2025-10-23
 
 Add Search projects preference that allows to search only active projects
