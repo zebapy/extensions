@@ -4,7 +4,10 @@
   "title": "Lunch Money",
   "description": "Unofficial Lunch Money extension to manage your personal finances.",
   "icon": "extension-icon.png",
-  "author": "zebapy",
+  "author": "oppenheimer",
+  "contributors": [
+    "zebapy"
+  ],
   "categories": [
     "Finance"
   ],
