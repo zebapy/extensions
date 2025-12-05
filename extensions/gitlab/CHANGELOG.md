@@ -1,5 +1,14 @@
 # GitLab Changelog
 
+## [Optimize Windows Experience] - 2025-12-05
+
+- Better milestones view
+- Add subtitles to `Recent Activities`
+- Add comments to Merge Requests
+- Add Comments to Issues
+- Add approvers count to Merge Requests
+- Show related branch in the issue list
+
 ## [Show Readme] - 2025-12-03
 
 - Add "Show Readme" action to project list
