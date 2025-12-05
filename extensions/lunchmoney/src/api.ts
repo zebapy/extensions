@@ -10,10 +10,6 @@ export type Tag = components["schemas"]["tagObject"];
 export type ManualAccount = components["schemas"]["manualAccountObject"];
 export type PlaidAccount = components["schemas"]["plaidAccountObject"];
 
-interface Preferences {
-  token: string;
-}
-
 export function useLunchMoney() {
   const { token } = getPreferenceValues<Preferences>();
 
