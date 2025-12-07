@@ -3,4 +3,3 @@
 ## [Initial Version] - {PR_MERGE_DATE}
 
 - Initial Raycast extension: search and browse Faraday API reference documentation.
-- `search` command to query API docs from Raycast.
